@@ -6,8 +6,9 @@ import Footer from "@/components/footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Welder Finder - Connect with Skilled Welding Professionals",
-  description: "Find and hire qualified welders for your projects, big or small.",
+  title: "ServiceConnect - Find Professional Service Providers",
+  description: "Connect with professional service providers tailored to your needs",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({ children }) {

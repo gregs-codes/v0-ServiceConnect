@@ -64,7 +64,7 @@ export default function Signup() {
           <div className="p-8">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Create an Account</h1>
-              <p className="text-gray-600 mt-2">Join WelderFinder today and connect with welding professionals</p>
+              <p className="text-gray-600 mt-2">Join ServiceConnect today and connect with service professionals</p>
             </div>
 
             {error && <div className="bg-red-100 text-red-700 p-3 rounded-md mb-6">{error}</div>}

@@ -8,8 +8,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4">WelderFinder</h3>
-            <p className="mb-4 text-gray-400">Connecting you with skilled welding professionals for your projects.</p>
+            <h3 className="text-xl font-bold mb-4">ServiceConnect</h3>
+            <p className="mb-4 text-gray-400">Connecting you with skilled service professionals for your projects.</p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white" aria-label="Facebook">
                 <Facebook className="h-5 w-5" />
@@ -36,8 +36,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/welders" className="text-gray-400 hover:text-white">
-                  Find Welders
+                <Link href="/providers" className="text-gray-400 hover:text-white">
+                  Find Providers
                 </Link>
               </li>
               <li>
@@ -58,13 +58,13 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* For Welders */}
+          {/* For Service Providers */}
           <div>
-            <h3 className="text-xl font-bold mb-4">For Welders</h3>
+            <h3 className="text-xl font-bold mb-4">For Service Providers</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/signup" className="text-gray-400 hover:text-white">
-                  Join as a Welder
+                  Join as a Provider
                 </Link>
               </li>
               <li>
@@ -91,7 +91,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                <span className="text-gray-400">123 Welding Street, Metal City, MC 12345</span>
+                <span className="text-gray-400">123 Service Street, Business District, BD 12345</span>
               </li>
               <li className="flex items-center">
                 <Phone className="h-5 w-5 text-gray-400 mr-2" />
@@ -99,14 +99,14 @@ export default function Footer() {
               </li>
               <li className="flex items-center">
                 <Mail className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-400">info@welderfinder.com</span>
+                <span className="text-gray-400">info@serviceconnect.com</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} WelderFinder. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} ServiceConnect. All rights reserved.</p>
         </div>
       </div>
     </footer>

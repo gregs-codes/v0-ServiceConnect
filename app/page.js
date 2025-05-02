@@ -43,8 +43,8 @@ export default function Home() {
       <section className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Find Expert Welders Near You</h1>
-            <p className="text-xl mb-8">Connect with skilled welding professionals for your projects, big or small</p>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Find Expert Service Providers Near You</h1>
+            <p className="text-xl mb-8">Connect with skilled professionals for your projects, big or small</p>
 
             {/* Search Form */}
             <div className="bg-white p-4 rounded-lg shadow-lg">
@@ -94,9 +94,9 @@ export default function Home() {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-12">
-            <h2 className="text-3xl font-bold">Featured Welders</h2>
-            <Link href="/welders" className="text-blue-700 font-medium hover:text-blue-800">
-              View all welders
+            <h2 className="text-3xl font-bold">Featured Providers</h2>
+            <Link href="/providers" className="text-blue-700 font-medium hover:text-blue-800">
+              View all providers
             </Link>
           </div>
 
@@ -171,22 +171,22 @@ export default function Home() {
       {/* CTA */}
       <section className="py-16 bg-blue-700 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Find Your Welder?</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Find Your Service Provider?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of customers who have found skilled welders for their projects.
+            Join thousands of customers who have found skilled professionals for their projects.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link
-              href="/welders"
+              href="/providers"
               className="bg-white text-blue-700 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors"
             >
-              Find Welders
+              Find Providers
             </Link>
             <Link
               href="/signup"
               className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-blue-700 transition-colors"
             >
-              Join as a Welder
+              Join as a Provider
             </Link>
           </div>
         </div>

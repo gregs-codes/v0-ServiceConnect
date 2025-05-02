@@ -2,79 +2,79 @@ import Link from "next/link"
 import { CheckCircle } from "lucide-react"
 
 export default function Services() {
-  // Sample services data
+  // Sample services data with various service categories
   const services = [
     {
-      id: "tig-welding",
-      title: "TIG Welding",
-      description: "Precision welding for thin materials and detailed work.",
+      id: "electrical",
+      title: "Electrical Services",
+      description: "Professional electrical installation, repair, and maintenance services.",
       features: [
-        "High-quality, clean welds",
-        "Ideal for thin materials",
-        "Perfect for visible or decorative welds",
-        "Works with stainless steel, aluminum, and more",
+        "Residential and commercial wiring",
+        "Lighting installation and repair",
+        "Panel upgrades and circuit installation",
+        "Electrical troubleshooting and safety inspections",
       ],
-      image: "/placeholder.svg?height=300&width=500",
+      image: "/electrician-working.png",
     },
     {
-      id: "mig-welding",
-      title: "MIG Welding",
-      description: "Fast and versatile welding for a wide range of materials and thicknesses.",
+      id: "plumbing",
+      title: "Plumbing Services",
+      description: "Expert plumbing solutions for residential and commercial properties.",
       features: [
-        "Quick and efficient process",
-        "Suitable for various material thicknesses",
-        "Less skill required than TIG welding",
-        "Great for production and fabrication work",
+        "Pipe installation and repair",
+        "Fixture installation and replacement",
+        "Drain cleaning and maintenance",
+        "Water heater services",
       ],
-      image: "/placeholder.svg?height=300&width=500",
+      image: "/plumber-working.png",
     },
     {
-      id: "stick-welding",
-      title: "Stick Welding",
-      description: "Robust welding method for outdoor and construction applications.",
+      id: "carpentry",
+      title: "Carpentry Services",
+      description: "Skilled carpentry work for construction and home improvement projects.",
       features: [
-        "Works well in windy or outdoor conditions",
-        "Effective on dirty or rusty materials",
-        "Ideal for thick materials and structural work",
-        "Portable and requires minimal equipment",
+        "Custom furniture and cabinetry",
+        "Framing and structural work",
+        "Finish carpentry and trim",
+        "Deck and fence construction",
       ],
-      image: "/placeholder.svg?height=300&width=500",
+      image: "/carpenter-working.png",
     },
     {
-      id: "flux-core-welding",
-      title: "Flux Core Welding",
-      description: "Self-shielded welding process ideal for outdoor and windy conditions.",
+      id: "welding",
+      title: "Welding Services",
+      description: "Professional welding for industrial, commercial, and residential needs.",
       features: [
-        "No external shielding gas required",
-        "Excellent for outdoor welding",
-        "Works well on dirty or rusty materials",
-        "Good penetration on thick materials",
+        "TIG, MIG, and stick welding",
+        "Metal fabrication and repair",
+        "Structural and pipe welding",
+        "Custom metal projects",
       ],
-      image: "/placeholder.svg?height=300&width=500",
+      image: "/placeholder.svg?key=mbnj8",
     },
     {
-      id: "pipe-welding",
-      title: "Pipe Welding",
-      description: "Specialized welding for pipes and tubes in various industries.",
+      id: "painting",
+      title: "Painting Services",
+      description: "Professional interior and exterior painting services.",
       features: [
-        "High-pressure pipe systems",
-        "Industrial piping installations",
-        "Oil and gas pipeline work",
-        "Certified pipe welders available",
+        "Residential and commercial painting",
+        "Interior and exterior surfaces",
+        "Decorative finishes and textures",
+        "Cabinet and furniture refinishing",
       ],
-      image: "/placeholder.svg?height=300&width=500",
+      image: "/painter-at-work.png",
     },
     {
-      id: "structural-welding",
-      title: "Structural Welding",
-      description: "Heavy-duty welding for construction and building frameworks.",
+      id: "landscaping",
+      title: "Landscaping Services",
+      description: "Complete landscaping solutions for beautiful outdoor spaces.",
       features: [
-        "Building frameworks and supports",
-        "Steel beam construction",
-        "Bridge components",
-        "Certified structural welders",
+        "Landscape design and installation",
+        "Lawn maintenance and care",
+        "Hardscaping and outdoor structures",
+        "Irrigation systems and water features",
       ],
-      image: "/placeholder.svg?height=300&width=500",
+      image: "/placeholder.svg?key=l93pr",
     },
   ]
 
@@ -83,10 +83,10 @@ export default function Services() {
       <div className="container mx-auto px-4">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">Welding Services</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">Professional Services</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Our platform connects you with skilled welders offering a wide range of welding services for any project,
-            big or small.
+            Our platform connects you with skilled professionals offering a wide range of services for any project, big
+            or small.
           </p>
         </div>
 
@@ -110,10 +110,10 @@ export default function Services() {
                   ))}
                 </ul>
                 <Link
-                  href={`/welders?service=${service.id}`}
+                  href={`/providers?service=${service.id}`}
                   className="bg-blue-700 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-800 transition-colors inline-block w-full text-center"
                 >
-                  Find Welders
+                  Find Service Providers
                 </Link>
               </div>
             </div>
@@ -123,10 +123,10 @@ export default function Services() {
         {/* Custom Services */}
         <div className="mt-16 bg-blue-700 text-white rounded-lg shadow-md p-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Need a Custom Welding Service?</h2>
+            <h2 className="text-3xl font-bold mb-4">Need a Specialized Service?</h2>
             <p className="text-xl max-w-3xl mx-auto">
-              Can't find what you're looking for? Our network includes welders with expertise in specialized and custom
-              welding services. Contact us to discuss your unique project needs.
+              Can't find what you're looking for? Our network includes professionals with expertise in many specialized
+              services. Contact us to discuss your unique project needs.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -137,10 +137,10 @@ export default function Services() {
               Contact Us
             </Link>
             <Link
-              href="/welders"
+              href="/providers"
               className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-blue-700 transition-colors text-center"
             >
-              Browse All Welders
+              Browse All Providers
             </Link>
           </div>
         </div>
@@ -150,31 +150,31 @@ export default function Services() {
           <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-bold mb-2">How do I choose the right welding service?</h3>
+              <h3 className="text-xl font-bold mb-2">How do I choose the right service provider?</h3>
               <p className="text-gray-700">
-                Consider the material type, thickness, and project requirements. Our platform allows you to filter
-                welders by specialty to find the perfect match for your project.
+                Consider your specific needs, project requirements, and budget. Our platform allows you to filter
+                providers by specialty, location, and ratings to find the perfect match for your project.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold mb-2">What information should I provide to get an accurate quote?</h3>
               <p className="text-gray-700">
-                Include material type and thickness, project dimensions, location, timeline, and any specific
-                requirements or challenges. Photos or drawings are also helpful.
+                Include detailed project specifications, timeline, location, and any specific requirements or
+                challenges. Photos or drawings are also helpful for service providers to give you an accurate estimate.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-bold mb-2">Are the welders on your platform certified?</h3>
+              <h3 className="text-xl font-bold mb-2">Are the service providers on your platform certified?</h3>
               <p className="text-gray-700">
-                Many welders on our platform hold various certifications. You can filter for certified welders and view
-                their credentials on their profiles.
+                Many providers on our platform hold various professional certifications. You can filter for certified
+                professionals and view their credentials on their profiles.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-bold mb-2">Can welders travel to my location?</h3>
+              <h3 className="text-xl font-bold mb-2">Can service providers travel to my location?</h3>
               <p className="text-gray-700">
-                Yes, many welders offer mobile services. When searching, you can specify your location to find welders
-                who service your area.
+                Yes, many providers offer mobile services. When searching, you can specify your location to find
+                professionals who service your area.
               </p>
             </div>
           </div>

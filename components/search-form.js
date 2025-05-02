@@ -9,6 +9,7 @@ export default function SearchForm() {
   const [searchData, setSearchData] = useState({
     location: "",
     service: "",
+    category: "",
   })
 
   const handleChange = (e) => {
@@ -26,9 +27,10 @@ export default function SearchForm() {
     const queryParams = new URLSearchParams()
     if (searchData.location) queryParams.append("location", searchData.location)
     if (searchData.service) queryParams.append("service", searchData.service)
+    if (searchData.category) queryParams.append("category", searchData.category)
 
-    // Navigate to welders page with search params
-    router.push(`/welders?${queryParams.toString()}`)
+    // Navigate to providers page with search params
+    router.push(`/providers?${queryParams.toString()}`)
   }
 
   return (
@@ -48,26 +50,39 @@ export default function SearchForm() {
         />
       </div>
       <div className="flex-1">
+        <label htmlFor="category" className="sr-only">
+          Provider Type
+        </label>
+        <select
+          id="category"
+          name="category"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+          value={searchData.category}
+          onChange={handleChange}
+        >
+          <option value="">All provider types</option>
+          <option value="welder">Welder</option>
+          <option value="electrician">Electrician</option>
+          <option value="plumber">Plumber</option>
+          <option value="carpenter">Carpenter</option>
+          <option value="painter">Painter</option>
+          <option value="hvac">HVAC Technician</option>
+          <option value="landscaper">Landscaper</option>
+        </select>
+      </div>
+      <div className="flex-1">
         <label htmlFor="service" className="sr-only">
           Service
         </label>
-        <select
+        <input
+          type="text"
           id="service"
           name="service"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+          placeholder="Service needed (e.g., pipe repair)"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={searchData.service}
           onChange={handleChange}
-        >
-          <option value="">Select service type</option>
-          <option value="tig">TIG Welding</option>
-          <option value="mig">MIG Welding</option>
-          <option value="stick">Stick Welding</option>
-          <option value="flux-core">Flux Core Welding</option>
-          <option value="pipe">Pipe Welding</option>
-          <option value="structural">Structural Welding</option>
-          <option value="aluminum">Aluminum Welding</option>
-          <option value="stainless">Stainless Steel Welding</option>
-        </select>
+        />
       </div>
       <button
         type="submit"

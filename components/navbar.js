@@ -16,7 +16,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="text-2xl font-bold text-blue-700">
-            WelderFinder
+            ServiceConnect
           </Link>
 
           {/* Desktop Navigation */}
@@ -24,8 +24,8 @@ export default function Navbar() {
             <Link href="/" className="text-gray-700 hover:text-blue-700 font-medium">
               Home
             </Link>
-            <Link href="/welders" className="text-gray-700 hover:text-blue-700 font-medium">
-              Find Welders
+            <Link href="/providers" className="text-gray-700 hover:text-blue-700 font-medium">
+              Find Providers
             </Link>
             <Link href="/services" className="text-gray-700 hover:text-blue-700 font-medium">
               Services
@@ -68,11 +68,11 @@ export default function Navbar() {
               Home
             </Link>
             <Link
-              href="/welders"
+              href="/providers"
               className="block text-gray-700 hover:text-blue-700 font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
-              Find Welders
+              Find Providers
             </Link>
             <Link
               href="/services"
