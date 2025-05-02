@@ -13,7 +13,8 @@ export default function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: "client", // client or welder
+    accountType: "client", // client or provider
+    serviceType: "", // Only relevant if accountType is "provider"
     agreeTerms: false,
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -40,6 +41,13 @@ export default function Signup() {
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      setIsSubmitting(false)
+      return
+    }
+
+    // Validate service type is selected if account type is provider
+    if (formData.accountType === "provider" && !formData.serviceType) {
+      setError("Please select a service type")
       setIsSubmitting(false)
       return
     }
@@ -92,33 +100,61 @@ export default function Signup() {
                     />
                     <label htmlFor="client" className="cursor-pointer block text-center">
                       <div className="font-bold mb-1">Client</div>
-                      <div className="text-sm text-gray-600">I need to hire a welder</div>
+                      <div className="text-sm text-gray-600">I need to hire service professionals</div>
                     </label>
                   </div>
                   <div
                     className={`border rounded-md p-4 cursor-pointer ${
-                      formData.accountType === "welder"
+                      formData.accountType === "provider"
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-300 hover:border-blue-300"
                     }`}
-                    onClick={() => setFormData((prev) => ({ ...prev, accountType: "welder" }))}
+                    onClick={() => setFormData((prev) => ({ ...prev, accountType: "provider" }))}
                   >
                     <input
                       type="radio"
-                      id="welder"
+                      id="provider"
                       name="accountType"
-                      value="welder"
-                      checked={formData.accountType === "welder"}
+                      value="provider"
+                      checked={formData.accountType === "provider"}
                       onChange={handleChange}
                       className="sr-only"
                     />
-                    <label htmlFor="welder" className="cursor-pointer block text-center">
-                      <div className="font-bold mb-1">Welder</div>
-                      <div className="text-sm text-gray-600">I am a welding professional</div>
+                    <label htmlFor="provider" className="cursor-pointer block text-center">
+                      <div className="font-bold mb-1">Service Provider</div>
+                      <div className="text-sm text-gray-600">I offer professional services</div>
                     </label>
                   </div>
                 </div>
               </div>
+
+              {/* Service Type Selection - Only shown if accountType is "provider" */}
+              {formData.accountType === "provider" && (
+                <div className="mb-6">
+                  <label htmlFor="serviceType" className="block text-gray-700 font-medium mb-2">
+                    What type of service do you provide?
+                  </label>
+                  <select
+                    id="serviceType"
+                    name="serviceType"
+                    value={formData.serviceType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select a service type</option>
+                    <option value="electrical">Electrical</option>
+                    <option value="plumbing">Plumbing</option>
+                    <option value="carpentry">Carpentry</option>
+                    <option value="welding">Welding</option>
+                    <option value="painting">Painting</option>
+                    <option value="landscaping">Landscaping</option>
+                    <option value="hvac">HVAC</option>
+                    <option value="cleaning">Cleaning</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
