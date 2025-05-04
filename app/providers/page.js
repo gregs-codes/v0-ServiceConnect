@@ -1,144 +1,20 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
-import SearchForm from "@/components/search-form"
-import { Filter, ChevronDown, ChevronUp, CheckCircle, MapPin, Star, DollarSign } from "lucide-react"
 import Link from "next/link"
-
-// Sample providers data - moved outside component to avoid recreating on each render
-const allProviders = [
-  {
-    id: 1,
-    name: "John Smith",
-    profession: "Welder",
-    location: "New York, NY",
-    rating: 4.9,
-    specialties: ["TIG Welding", "MIG Welding", "Pipe Welding"],
-    hourlyRate: 75,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    profession: "Electrician",
-    location: "Los Angeles, CA",
-    rating: 4.8,
-    specialties: ["Residential Wiring", "Commercial Installations", "Lighting"],
-    hourlyRate: 65,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    profession: "Plumber",
-    location: "Chicago, IL",
-    rating: 4.7,
-    specialties: ["Pipe Repair", "Fixture Installation", "Drain Cleaning"],
-    hourlyRate: 70,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: false,
-  },
-  {
-    id: 4,
-    name: "David Wilson",
-    profession: "Carpenter",
-    location: "Houston, TX",
-    rating: 4.5,
-    specialties: ["Custom Furniture", "Framing", "Cabinetry"],
-    hourlyRate: 60,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: 5,
-    name: "Jennifer Lee",
-    profession: "Welder",
-    location: "Seattle, WA",
-    rating: 4.9,
-    specialties: ["TIG Welding", "Aluminum Welding", "Stainless Steel Welding"],
-    hourlyRate: 80,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: 6,
-    name: "Robert Martinez",
-    profession: "Electrician",
-    location: "Miami, FL",
-    rating: 4.6,
-    specialties: ["Panel Upgrades", "Troubleshooting", "Smart Home Installation"],
-    hourlyRate: 70,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: false,
-  },
-  {
-    id: 7,
-    name: "Emily Davis",
-    profession: "Painter",
-    location: "Denver, CO",
-    rating: 4.8,
-    specialties: ["Interior Painting", "Exterior Painting", "Decorative Finishes"],
-    hourlyRate: 55,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: 8,
-    name: "James Taylor",
-    profession: "HVAC Technician",
-    location: "Phoenix, AZ",
-    rating: 4.7,
-    specialties: ["AC Installation", "Heating Repair", "Ventilation Systems"],
-    hourlyRate: 75,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: 9,
-    name: "Lisa Anderson",
-    profession: "Landscaper",
-    location: "Portland, OR",
-    rating: 4.9,
-    specialties: ["Garden Design", "Lawn Maintenance", "Hardscaping"],
-    hourlyRate: 60,
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-]
-
-// Service mapping - moved outside component
-const serviceMapping = {
-  // Welding
-  tig: "TIG Welding",
-  mig: "MIG Welding",
-  stick: "Stick Welding",
-  "flux-core": "Flux Core Welding",
-  pipe: "Pipe Welding",
-  structural: "Structural Welding",
-
-  // Electrical
-  residential: "Residential Wiring",
-  commercial: "Commercial Installations",
-  lighting: "Lighting",
-
-  // Plumbing
-  repair: "Pipe Repair",
-  fixtures: "Fixture Installation",
-  drains: "Drain Cleaning",
-
-  // Carpentry
-  furniture: "Custom Furniture",
-  framing: "Framing",
-  cabinetry: "Cabinetry",
-}
+import { Filter, ChevronDown, ChevronUp, CheckCircle, MapPin, Star, DollarSign } from "lucide-react"
+import SearchForm from "@/components/search-form"
+import { getProviders, getServiceCategories } from "@/lib/api"
 
 export default function Providers() {
   const searchParams = useSearchParams()
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState("all")
+  const [providers, setProviders] = useState([])
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   // Get search params once on initial render
   const initialLocation = searchParams.get("location") || ""
@@ -152,97 +28,43 @@ export default function Providers() {
     category: initialCategory,
     minRating: "",
     maxPrice: "",
-    specialties: [],
   })
 
-  // Filter providers using useMemo to avoid unnecessary recalculations
-  const filteredProviders = useMemo(() => {
-    let result = [...allProviders]
-
-    // Filter by category
-    if (filters.category && filters.category !== "all") {
-      result = result.filter((provider) => provider.profession.toLowerCase() === filters.category.toLowerCase())
-    }
-
-    // Filter by location
-    if (filters.location) {
-      result = result.filter((provider) => provider.location.toLowerCase().includes(filters.location.toLowerCase()))
-    }
-
-    // Filter by service/specialty
-    if (filters.service) {
-      const serviceToFind = serviceMapping[filters.service] || filters.service
-
-      result = result.filter((provider) =>
-        provider.specialties.some((specialty) => specialty.toLowerCase().includes(serviceToFind.toLowerCase())),
-      )
-    }
-
-    // Filter by minimum rating
-    if (filters.minRating) {
-      result = result.filter((provider) => provider.rating >= Number.parseFloat(filters.minRating))
-    }
-
-    // Filter by maximum price
-    if (filters.maxPrice) {
-      result = result.filter((provider) => provider.hourlyRate <= Number.parseFloat(filters.maxPrice))
-    }
-
-    // Filter by selected specialties
-    if (filters.specialties.length > 0) {
-      result = result.filter((provider) =>
-        filters.specialties.some((specialty) => provider.specialties.includes(specialty)),
-      )
-    }
-
-    return result
-  }, [filters])
-
-  // Update filters when URL search params change
+  // Fetch providers and categories on component mount
   useEffect(() => {
-    const locationParam = searchParams.get("location")
-    const serviceParam = searchParams.get("service")
-    const categoryParam = searchParams.get("category")
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // Fetch service categories
+        const categoriesResponse = await getServiceCategories()
+        const fetchedCategories = categoriesResponse.data || []
+        setCategories(fetchedCategories)
 
-    // Only update if the params have changed from what's in state
-    const shouldUpdate =
-      (locationParam !== null && locationParam !== filters.location) ||
-      (serviceParam !== null && serviceParam !== filters.service) ||
-      (categoryParam !== null && categoryParam !== filters.category)
+        // Fetch providers with filters
+        const apiFilters = {}
+        if (filters.location) apiFilters.location = filters.location
+        if (filters.category && filters.category !== "all") apiFilters.category = filters.category
+        if (filters.minRating) apiFilters.minRating = filters.minRating
 
-    if (shouldUpdate) {
-      setFilters((prev) => ({
-        ...prev,
-        location: locationParam || prev.location,
-        service: serviceParam || prev.service,
-        category: categoryParam || prev.category,
-      }))
+        const providersResponse = await getProviders(apiFilters)
+        setProviders(providersResponse.data || [])
+      } catch (err) {
+        console.error("Error fetching data:", err)
+        setError("Failed to load providers. Please try again later.")
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [searchParams]) // Only depend on searchParams, not filters
+
+    fetchData()
+  }, [filters.location, filters.category, filters.minRating])
 
   const handleFilterChange = (e) => {
-    const { name, value, type, checked } = e.target
-
-    if (type === "checkbox") {
-      setFilters((prev) => {
-        if (checked) {
-          return {
-            ...prev,
-            specialties: [...prev.specialties, value],
-          }
-        } else {
-          return {
-            ...prev,
-            specialties: prev.specialties.filter((specialty) => specialty !== value),
-          }
-        }
-      })
-    } else {
-      setFilters((prev) => ({
-        ...prev,
-        [name]: value,
-      }))
-    }
+    const { name, value } = e.target
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
   const toggleFilter = () => {
@@ -257,11 +79,10 @@ export default function Providers() {
     }))
   }
 
-  // Get unique professions for category filter
-  const categories = useMemo(() => {
-    const professions = allProviders.map((provider) => provider.profession)
-    return ["all", ...new Set(professions)]
-  }, [])
+  // Filter providers by max price client-side
+  const filteredProviders = filters.maxPrice
+    ? providers.filter((provider) => provider.hourlyRate <= Number.parseFloat(filters.maxPrice))
+    : providers
 
   return (
     <main className="min-h-screen py-12">
@@ -276,15 +97,26 @@ export default function Providers() {
         {/* Category Tabs */}
         <div className="bg-white rounded-lg shadow-md mb-8 overflow-x-auto">
           <div className="flex p-1 min-w-max">
+            <button
+              key="all"
+              onClick={() => handleCategoryChange("all")}
+              className={`px-4 py-2 mx-1 rounded-md font-medium ${
+                activeCategory === "all" ? "bg-blue-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              All Providers
+            </button>
             {categories.map((category) => (
               <button
-                key={category}
-                onClick={() => handleCategoryChange(category)}
+                key={category.id}
+                onClick={() => handleCategoryChange(category.id)}
                 className={`px-4 py-2 mx-1 rounded-md font-medium ${
-                  activeCategory === category ? "bg-blue-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  activeCategory === category.id
+                    ? "bg-blue-700 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
-                {category === "all" ? "All Providers" : `${category}s`}
+                {category.name}
               </button>
             ))}
           </div>
@@ -359,7 +191,6 @@ export default function Providers() {
                       category: "all",
                       minRating: "",
                       maxPrice: "",
-                      specialties: [],
                     })
                   }
                   className="text-blue-700 font-medium hover:text-blue-800"
@@ -373,23 +204,20 @@ export default function Providers() {
           {/* Providers List */}
           <div className="lg:w-3/4">
             <div className="mb-4 flex justify-between items-center">
-              <p className="text-gray-600">{filteredProviders.length} service providers found</p>
-              <div>
-                <label htmlFor="sort" className="text-gray-600 mr-2">
-                  Sort by:
-                </label>
-                <select
-                  id="sort"
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="rating">Highest Rating</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                </select>
-              </div>
+              {loading ? (
+                <p className="text-gray-600">Loading providers...</p>
+              ) : error ? (
+                <p className="text-red-600">{error}</p>
+              ) : (
+                <p className="text-gray-600">{filteredProviders.length} service providers found</p>
+              )}
             </div>
 
-            {filteredProviders.length > 0 ? (
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-700"></div>
+              </div>
+            ) : filteredProviders.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredProviders.map((provider) => (
                   <ProviderCard key={provider.id} provider={provider} />
@@ -409,7 +237,6 @@ export default function Providers() {
                       category: "all",
                       minRating: "",
                       maxPrice: "",
-                      specialties: [],
                     })
                   }
                   className="text-blue-700 font-medium hover:text-blue-800"
@@ -430,7 +257,11 @@ function ProviderCard({ provider }) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
-        <img src={provider.image || "/placeholder.svg"} alt={provider.name} className="w-full h-48 object-cover" />
+        <img
+          src={provider.avatar || "/placeholder.svg?height=300&width=300"}
+          alt={provider.name}
+          className="w-full h-48 object-cover"
+        />
         {provider.verified && (
           <div className="absolute top-2 right-2 bg-blue-700 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
             <CheckCircle className="h-3 w-3 mr-1" /> Verified
@@ -439,15 +270,14 @@ function ProviderCard({ provider }) {
       </div>
       <div className="p-6">
         <h3 className="text-xl font-bold mb-1">{provider.name}</h3>
-        <div className="text-gray-600 mb-2">{provider.profession}</div>
         <div className="flex items-center mb-3">
           <MapPin className="h-4 w-4 text-gray-500 mr-1" />
           <span className="text-gray-500 text-sm">{provider.location}</span>
         </div>
         <div className="flex items-center mb-3">
           <Star className="h-4 w-4 text-yellow-400 mr-1" />
-          <span className="font-medium">{provider.rating}</span>
-          <span className="text-gray-500 text-sm ml-1">({Math.floor(Math.random() * 50) + 10} reviews)</span>
+          <span className="font-medium">{provider.rating || "New"}</span>
+          {provider.reviews > 0 && <span className="text-gray-500 text-sm ml-1">({provider.reviews} reviews)</span>}
         </div>
         <div className="flex items-center mb-4">
           <DollarSign className="h-4 w-4 text-gray-700 mr-1" />
@@ -457,11 +287,12 @@ function ProviderCard({ provider }) {
         <div className="mb-4">
           <h4 className="text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
           <div className="flex flex-wrap gap-2">
-            {provider.specialties.map((specialty, index) => (
-              <span key={index} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                {specialty}
-              </span>
-            ))}
+            {provider.specialties &&
+              provider.specialties.map((specialty, index) => (
+                <span key={index} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                  {specialty}
+                </span>
+              ))}
           </div>
         </div>
         <div className="flex space-x-3">

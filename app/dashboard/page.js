@@ -1,98 +1,60 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
-import {
-  User,
-  Calendar,
-  MessageSquare,
-  FileText,
-  Settings,
-  Bell,
-  CheckCircle,
-  Clock,
-  MapPin,
-  DollarSign,
-} from "lucide-react"
+import { User, Calendar, MessageSquare, FileText, Settings, Bell, MapPin, Plus } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { getProjects } from "@/lib/api"
 
 export default function Dashboard() {
+  const router = useRouter()
+  const { user, token, isAuthenticated, loading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // Sample data for dashboard
-  const upcomingProjects = [
-    {
-      id: 1,
-      title: "Industrial Pipe Welding",
-      client: "ABC Manufacturing",
-      date: "May 15, 2023",
-      status: "confirmed",
-      location: "Phoenix, AZ",
-    },
-    {
-      id: 2,
-      title: "Custom Metal Staircase",
-      client: "Johnson Residence",
-      date: "May 22, 2023",
-      status: "pending",
-      location: "Scottsdale, AZ",
-    },
-    {
-      id: 3,
-      title: "Aluminum Fence Repair",
-      client: "City Park Department",
-      date: "June 3, 2023",
-      status: "confirmed",
-      location: "Tempe, AZ",
-    },
-  ]
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login")
+    }
+  }, [authLoading, isAuthenticated, router])
 
-  const recentMessages = [
-    {
-      id: 1,
-      from: "John Smith",
-      subject: "Project Details",
-      preview: "I wanted to discuss the specifics of the welding project we talked about...",
-      date: "2 hours ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      from: "Sarah Johnson",
-      subject: "Quote Request",
-      preview: "Could you provide a quote for welding services for our upcoming construction project?",
-      date: "Yesterday",
-      unread: false,
-    },
-    {
-      id: 3,
-      from: "Michael Brown",
-      subject: "Follow-up",
-      preview: "Thank you for completing the project. I wanted to follow up on the final inspection...",
-      date: "3 days ago",
-      unread: false,
-    },
-  ]
+  // Fetch projects on component mount
+  useEffect(() => {
+    if (isAuthenticated && token && user) {
+      const fetchProjects = async () => {
+        setLoading(true)
+        try {
+          const filters = user.isProvider ? { providerId: user.id } : { clientId: user.id }
 
-  const notifications = [
-    {
-      id: 1,
-      message: "New project request from ABC Manufacturing",
-      time: "1 hour ago",
-      type: "request",
-    },
-    {
-      id: 2,
-      message: "Your quote for Johnson Residence was accepted",
-      time: "Yesterday",
-      type: "success",
-    },
-    {
-      id: 3,
-      message: "Payment received for City Park Department project",
-      time: "2 days ago",
-      type: "payment",
-    },
-  ]
+          const response = await getProjects(filters, token)
+          setProjects(response.data || [])
+        } catch (err) {
+          console.error("Error fetching projects:", err)
+          setError("Failed to load projects. Please try again later.")
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchProjects()
+    }
+  }, [isAuthenticated, token, user])
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-700"></div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null // Will redirect in useEffect
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 py-8">
@@ -106,8 +68,10 @@ export default function Dashboard() {
                   <User className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">David Wilson</h2>
-                  <p className="text-gray-600">Welder Professional</p>
+                  <h2 className="text-xl font-bold">
+                    {user?.firstName} {user?.lastName}
+                  </h2>
+                  <p className="text-gray-600">{user?.isProvider ? "Service Provider" : "Client"}</p>
                 </div>
               </div>
 
@@ -129,7 +93,7 @@ export default function Dashboard() {
                     }`}
                   >
                     <Calendar className="h-5 w-5 mr-3" />
-                    Projects
+                    {user?.isProvider ? "My Jobs" : "My Projects"}
                   </button>
                   <button
                     onClick={() => setActiveTab("messages")}
@@ -162,13 +126,15 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-blue-700 text-white rounded-lg shadow-md p-6">
-              <h3 className="font-bold mb-2">Upgrade to Pro</h3>
-              <p className="text-blue-100 mb-4">Get more features and priority placement in search results.</p>
-              <button className="bg-white text-blue-700 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition-colors w-full">
-                Upgrade Now
-              </button>
-            </div>
+            {user?.isProvider && (
+              <div className="bg-blue-700 text-white rounded-lg shadow-md p-6">
+                <h3 className="font-bold mb-2">Upgrade to Pro</h3>
+                <p className="text-blue-100 mb-4">Get more features and priority placement in search results.</p>
+                <button className="bg-white text-blue-700 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition-colors w-full">
+                  Upgrade Now
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Main Content */}
@@ -181,99 +147,130 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-gray-700">Upcoming Projects</h3>
+                      <h3 className="font-bold text-gray-700">
+                        {user?.isProvider ? "Active Jobs" : "Active Projects"}
+                      </h3>
                       <span className="bg-blue-100 text-blue-700 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                        {upcomingProjects.length}
+                        {projects.filter((p) => p.status === "in_progress").length}
                       </span>
                     </div>
-                    <div className="text-3xl font-bold">{upcomingProjects.length}</div>
+                    <div className="text-3xl font-bold">
+                      {projects.filter((p) => p.status === "in_progress").length}
+                    </div>
                   </div>
 
                   <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-gray-700">Unread Messages</h3>
-                      <span className="bg-blue-100 text-blue-700 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                        {recentMessages.filter((msg) => msg.unread).length}
+                      <h3 className="font-bold text-gray-700">Pending</h3>
+                      <span className="bg-yellow-100 text-yellow-700 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                        {projects.filter((p) => p.status === "pending" || p.status === "open").length}
                       </span>
                     </div>
-                    <div className="text-3xl font-bold">{recentMessages.filter((msg) => msg.unread).length}</div>
+                    <div className="text-3xl font-bold">
+                      {projects.filter((p) => p.status === "pending" || p.status === "open").length}
+                    </div>
                   </div>
 
                   <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-gray-700">Profile Views</h3>
+                      <h3 className="font-bold text-gray-700">Completed</h3>
                       <span className="bg-green-100 text-green-700 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                        +12%
+                        {projects.filter((p) => p.status === "completed").length}
                       </span>
                     </div>
-                    <div className="text-3xl font-bold">48</div>
+                    <div className="text-3xl font-bold">{projects.filter((p) => p.status === "completed").length}</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold">Upcoming Projects</h3>
+                      <h3 className="font-bold">{user?.isProvider ? "Recent Jobs" : "Recent Projects"}</h3>
                       <Link href="/dashboard/projects" className="text-blue-700 text-sm hover:text-blue-800">
                         View all
                       </Link>
                     </div>
 
-                    <div className="space-y-4">
-                      {upcomingProjects.slice(0, 2).map((project) => (
-                        <div key={project.id} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium">{project.title}</h4>
-                              <p className="text-gray-600 text-sm">{project.client}</p>
-                              <div className="flex items-center mt-1 text-sm text-gray-500">
-                                <Calendar className="h-4 w-4 mr-1" />
-                                {project.date}
+                    {loading ? (
+                      <div className="flex justify-center items-center h-32">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-700"></div>
+                      </div>
+                    ) : error ? (
+                      <p className="text-red-600">{error}</p>
+                    ) : projects.length > 0 ? (
+                      <div className="space-y-4">
+                        {projects.slice(0, 3).map((project) => (
+                          <div key={project.id} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{project.title}</h4>
+                                <p className="text-gray-600 text-sm">
+                                  {user?.isProvider ? project.client?.name : project.category?.name}
+                                </p>
+                                <div className="flex items-center mt-1 text-sm text-gray-500">
+                                  <Calendar className="h-4 w-4 mr-1" />
+                                  {new Date(project.createdAt).toLocaleDateString()}
+                                </div>
                               </div>
+                              <span
+                                className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                                  project.status === "completed"
+                                    ? "bg-green-100 text-green-700"
+                                    : project.status === "in_progress"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-yellow-100 text-yellow-700"
+                                }`}
+                              >
+                                {project.status === "in_progress"
+                                  ? "In Progress"
+                                  : project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                              </span>
                             </div>
-                            <span
-                              className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                                project.status === "confirmed"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}
-                            >
-                              {project.status === "confirmed" ? "Confirmed" : "Pending"}
-                            </span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">
+                        No {user?.isProvider ? "jobs" : "projects"} found.
+                      </p>
+                    )}
                   </div>
 
+                  {/* Quick Actions */}
                   <div className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold">Recent Messages</h3>
-                      <Link href="/dashboard/messages" className="text-blue-700 text-sm hover:text-blue-800">
-                        View all
-                      </Link>
-                    </div>
-
-                    <div className="space-y-4">
-                      {recentMessages.slice(0, 2).map((message) => (
-                        <div key={message.id} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="flex items-center">
-                                <h4 className="font-medium">{message.from}</h4>
-                                {message.unread && (
-                                  <span className="ml-2 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                                    New
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-gray-600 text-sm">{message.subject}</p>
-                              <p className="text-gray-500 text-sm mt-1 line-clamp-1">{message.preview}</p>
-                            </div>
-                            <span className="text-xs text-gray-500">{message.date}</span>
-                          </div>
-                        </div>
-                      ))}
+                    <h3 className="font-bold mb-4">Quick Actions</h3>
+                    <div className="space-y-3">
+                      {user?.isProvider ? (
+                        <>
+                          <Link
+                            href="/dashboard/projects"
+                            className="block bg-blue-700 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-800 transition-colors text-center"
+                          >
+                            View All Jobs
+                          </Link>
+                          <Link
+                            href="/dashboard/profile"
+                            className="block border border-blue-700 text-blue-700 px-4 py-3 rounded-md font-medium hover:bg-blue-50 transition-colors text-center"
+                          >
+                            Update Profile
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <Link
+                            href="/projects/new"
+                            className="block bg-blue-700 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-800 transition-colors text-center flex items-center justify-center"
+                          >
+                            <Plus className="h-5 w-5 mr-2" /> Post New Project
+                          </Link>
+                          <Link
+                            href="/providers"
+                            className="block border border-blue-700 text-blue-700 px-4 py-3 rounded-md font-medium hover:bg-blue-50 transition-colors text-center"
+                          >
+                            Find Service Providers
+                          </Link>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -284,63 +281,102 @@ export default function Dashboard() {
             {activeTab === "projects" && (
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h1 className="text-2xl font-bold">Projects</h1>
-                  <button className="bg-blue-700 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-800 transition-colors">
-                    Add New Project
-                  </button>
+                  <h1 className="text-2xl font-bold">{user?.isProvider ? "My Jobs" : "My Projects"}</h1>
+                  {!user?.isProvider && (
+                    <Link
+                      href="/projects/new"
+                      className="bg-blue-700 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-800 transition-colors flex items-center"
+                    >
+                      <Plus className="h-5 w-5 mr-2" /> New Project
+                    </Link>
+                  )}
                 </div>
 
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <div className="p-6 border-b border-gray-200">
-                    <h2 className="font-bold text-lg">Upcoming Projects</h2>
+                {loading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-700"></div>
                   </div>
+                ) : error ? (
+                  <p className="text-red-600">{error}</p>
+                ) : projects.length > 0 ? (
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div className="p-6 border-b border-gray-200">
+                      <h2 className="font-bold text-lg">
+                        {user?.isProvider ? "Current & Upcoming Jobs" : "Your Projects"}
+                      </h2>
+                    </div>
 
-                  <div className="divide-y divide-gray-200">
-                    {upcomingProjects.map((project) => (
-                      <div key={project.id} className="p-6 hover:bg-gray-50">
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-                          <div className="mb-4 md:mb-0">
-                            <h3 className="font-bold text-lg">{project.title}</h3>
-                            <p className="text-gray-600">{project.client}</p>
-                            <div className="flex items-center mt-2 text-sm text-gray-500">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              {project.date}
+                    <div className="divide-y divide-gray-200">
+                      {projects.map((project) => (
+                        <div key={project.id} className="p-6 hover:bg-gray-50">
+                          <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+                            <div className="mb-4 md:mb-0">
+                              <h3 className="font-bold text-lg">{project.title}</h3>
+                              <p className="text-gray-600">{project.description}</p>
+                              <div className="flex items-center mt-2 text-sm text-gray-500">
+                                <Calendar className="h-4 w-4 mr-1" />
+                                {new Date(project.createdAt).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center mt-1 text-sm text-gray-500">
+                                <MapPin className="h-4 w-4 mr-1" />
+                                {project.location || "Remote"}
+                              </div>
                             </div>
-                            <div className="flex items-center mt-1 text-sm text-gray-500">
-                              <MapPin className="h-4 w-4 mr-1" />
-                              {project.location}
-                            </div>
-                          </div>
 
-                          <div className="flex flex-col items-start md:items-end">
-                            <span
-                              className={`mb-3 text-sm font-medium px-3 py-1 rounded-full ${
-                                project.status === "confirmed"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}
-                            >
-                              {project.status === "confirmed" ? (
-                                <span className="flex items-center">
-                                  <CheckCircle className="h-4 w-4 mr-1" /> Confirmed
-                                </span>
-                              ) : (
-                                <span className="flex items-center">
-                                  <Clock className="h-4 w-4 mr-1" /> Pending
-                                </span>
-                              )}
-                            </span>
+                            <div className="flex flex-col items-start md:items-end">
+                              <span
+                                className={`mb-3 text-sm font-medium px-3 py-1 rounded-full ${
+                                  project.status === "completed"
+                                    ? "bg-green-100 text-green-700"
+                                    : project.status === "in_progress"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-yellow-100 text-yellow-700"
+                                }`}
+                              >
+                                {project.status === "in_progress"
+                                  ? "In Progress"
+                                  : project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                              </span>
 
-                            <div className="flex space-x-2">
-                              <button className="text-blue-700 hover:text-blue-800 font-medium">View Details</button>
-                              <button className="text-gray-600 hover:text-gray-800 font-medium">Edit</button>
+                              <div className="flex space-x-2">
+                                <Link
+                                  href={`/projects/${project.id}`}
+                                  className="text-blue-700 hover:text-blue-800 font-medium"
+                                >
+                                  View Details
+                                </Link>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-white p-8 rounded-lg shadow-md text-center">
+                    <h3 className="text-xl font-bold mb-2">No {user?.isProvider ? "jobs" : "projects"} found</h3>
+                    <p className="text-gray-600 mb-6">
+                      {user?.isProvider
+                        ? "You don't have any jobs yet. Update your profile to attract more clients."
+                        : "You haven't created any projects yet. Post a new project to find service providers."}
+                    </p>
+                    {user?.isProvider ? (
+                      <Link
+                        href="/dashboard/profile"
+                        className="bg-blue-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-800 transition-colors"
+                      >
+                        Update Profile
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/projects/new"
+                        className="bg-blue-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-800 transition-colors flex items-center justify-center inline-flex"
+                      >
+                        <Plus className="h-5 w-5 mr-2" /> Post New Project
+                      </Link>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -355,31 +391,10 @@ export default function Dashboard() {
                 </div>
 
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <div className="divide-y divide-gray-200">
-                    {recentMessages.map((message) => (
-                      <div key={message.id} className={`p-6 hover:bg-gray-50 ${message.unread ? "bg-blue-50" : ""}`}>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="flex items-center">
-                              <h3 className="font-bold text-lg">{message.from}</h3>
-                              {message.unread && (
-                                <span className="ml-2 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                                  New
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-gray-700 font-medium">{message.subject}</p>
-                            <p className="text-gray-600 mt-1">{message.preview}</p>
-                            <p className="text-gray-500 text-sm mt-2">{message.date}</p>
-                          </div>
-
-                          <div className="flex space-x-2">
-                            <button className="text-blue-700 hover:text-blue-800 font-medium">Reply</button>
-                            <button className="text-gray-600 hover:text-gray-800 font-medium">Delete</button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="p-6 text-center text-gray-500">
+                    <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="mb-4">You don't have any messages yet.</p>
+                    <p>Messages from your clients or service providers will appear here.</p>
                   </div>
                 </div>
               </div>
@@ -391,35 +406,10 @@ export default function Dashboard() {
                 <h1 className="text-2xl font-bold mb-6">Notifications</h1>
 
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <div className="divide-y divide-gray-200">
-                    {notifications.map((notification) => (
-                      <div key={notification.id} className="p-6 hover:bg-gray-50">
-                        <div className="flex items-start">
-                          <div className="mr-4">
-                            {notification.type === "request" && (
-                              <div className="bg-blue-100 p-2 rounded-full">
-                                <Bell className="h-6 w-6 text-blue-700" />
-                              </div>
-                            )}
-                            {notification.type === "success" && (
-                              <div className="bg-green-100 p-2 rounded-full">
-                                <CheckCircle className="h-6 w-6 text-green-700" />
-                              </div>
-                            )}
-                            {notification.type === "payment" && (
-                              <div className="bg-purple-100 p-2 rounded-full">
-                                <DollarSign className="h-6 w-6 text-purple-700" />
-                              </div>
-                            )}
-                          </div>
-
-                          <div>
-                            <p className="font-medium">{notification.message}</p>
-                            <p className="text-gray-500 text-sm mt-1">{notification.time}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="p-6 text-center text-gray-500">
+                    <Bell className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="mb-4">You don't have any notifications yet.</p>
+                    <p>We'll notify you about important updates and activities.</p>
                   </div>
                 </div>
               </div>
@@ -445,7 +435,7 @@ export default function Dashboard() {
                           <input
                             type="text"
                             id="firstName"
-                            defaultValue="David"
+                            defaultValue={user?.firstName || ""}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
@@ -456,7 +446,7 @@ export default function Dashboard() {
                           <input
                             type="text"
                             id="lastName"
-                            defaultValue="Wilson"
+                            defaultValue={user?.lastName || ""}
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
@@ -469,31 +459,7 @@ export default function Dashboard() {
                         <input
                           type="email"
                           id="email"
-                          defaultValue="david.wilson@example.com"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="phone" className="block text-gray-700 font-medium mb-2">
-                          Phone Number
-                        </label>
-                        <input
-                          type="tel"
-                          id="phone"
-                          defaultValue="(555) 123-4567"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="location" className="block text-gray-700 font-medium mb-2">
-                          Location
-                        </label>
-                        <input
-                          type="text"
-                          id="location"
-                          defaultValue="Phoenix, AZ"
+                          defaultValue={user?.email || ""}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>

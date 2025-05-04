@@ -4,9 +4,12 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Signup() {
   const router = useRouter()
+  const { register, login } = useAuth()
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -53,13 +56,23 @@ export default function Signup() {
     }
 
     try {
-      // Simulate account creation
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Register the user
+      await register({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        accountType: formData.accountType,
+        serviceType: formData.serviceType,
+      })
 
-      // In a real app, you would send the data to your backend
+      // Log the user in
+      await login(formData.email, formData.password)
+
+      // Redirect to dashboard
       router.push("/dashboard")
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError(error.message || "An error occurred during registration")
     } finally {
       setIsSubmitting(false)
     }

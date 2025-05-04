@@ -4,9 +4,12 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Login() {
   const router = useRouter()
+  const { login, error: authError } = useAuth()
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -34,18 +37,10 @@ export default function Login() {
     setError("")
 
     try {
-      // Simulate authentication
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // In a real app, you would validate credentials with your backend
-      if (formData.email === "test@example.com" && formData.password === "password") {
-        // Successful login
-        router.push("/dashboard")
-      } else {
-        setError("Invalid email or password")
-      }
+      await login(formData.email, formData.password)
+      router.push("/dashboard")
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError(error.message || "Invalid email or password")
     } finally {
       setIsSubmitting(false)
     }
@@ -61,7 +56,9 @@ export default function Login() {
               <p className="text-gray-600 mt-2">Welcome back to ServiceConnect! Log in to your account</p>
             </div>
 
-            {error && <div className="bg-red-100 text-red-700 p-3 rounded-md mb-6">{error}</div>}
+            {(error || authError) && (
+              <div className="bg-red-100 text-red-700 p-3 rounded-md mb-6">{error || authError}</div>
+            )}
 
             <form onSubmit={handleSubmit}>
               <div className="mb-6">

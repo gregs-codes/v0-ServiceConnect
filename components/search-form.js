@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
+import { getServiceCategories } from "@/lib/api"
 
 export default function SearchForm() {
   const router = useRouter()
@@ -11,6 +12,24 @@ export default function SearchForm() {
     service: "",
     category: "",
   })
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch service categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getServiceCategories()
+        setCategories(response.data || [])
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -51,7 +70,7 @@ export default function SearchForm() {
       </div>
       <div className="flex-1">
         <label htmlFor="category" className="sr-only">
-          Provider Type
+          Service Category
         </label>
         <select
           id="category"
@@ -59,15 +78,14 @@ export default function SearchForm() {
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
           value={searchData.category}
           onChange={handleChange}
+          disabled={loading}
         >
-          <option value="">All provider types</option>
-          <option value="welder">Welder</option>
-          <option value="electrician">Electrician</option>
-          <option value="plumber">Plumber</option>
-          <option value="carpenter">Carpenter</option>
-          <option value="painter">Painter</option>
-          <option value="hvac">HVAC Technician</option>
-          <option value="landscaper">Landscaper</option>
+          <option value="">All service categories</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
         </select>
       </div>
       <div className="flex-1">
