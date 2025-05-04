@@ -17,3 +17,13 @@ export function errorResponse(message = "An error occurred", statusCode = 400) {
     statusCode,
   }
 }
+
+// Add the missing apiResponse export
+export function apiResponse(success, data = null, message = "", statusCode = 200) {
+  return {
+    success,
+    message,
+    data,
+    statusCode,
+  }
+}

@@ -40,16 +40,18 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-20">
+      <section className="bg-blue-700 text-white py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Find Expert Service Providers Near You</h1>
-            <p className="text-xl mb-8">Connect with skilled professionals for your projects, big or small</p>
+          <div className="max-w-3xl mx-auto text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Find the Right Service Provider</h1>
+            <p className="text-xl">
+              Connect with qualified professionals for your home, business, or personal projects
+            </p>
+          </div>
 
-            {/* Search Form */}
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <SearchForm />
-            </div>
+          {/* Pass darkMode prop as true since this is on a dark background */}
+          <div className="max-w-5xl mx-auto">
+            <SearchForm darkMode={true} />
           </div>
         </div>
       </section>

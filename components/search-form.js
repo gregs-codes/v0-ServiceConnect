@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { getServiceCategories } from "@/lib/api"
 
-export default function SearchForm() {
+export default function SearchForm({ darkMode = false }) {
   const router = useRouter()
   const [searchData, setSearchData] = useState({
     location: "",
@@ -63,9 +63,10 @@ export default function SearchForm() {
           id="location"
           name="location"
           placeholder="Enter your location"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
           value={searchData.location}
           onChange={handleChange}
+          style={{ color: "#333" }} // Forcing dark text color with inline style
         />
       </div>
       <div className="flex-1">
@@ -75,10 +76,11 @@ export default function SearchForm() {
         <select
           id="category"
           name="category"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-900"
           value={searchData.category}
           onChange={handleChange}
           disabled={loading}
+          style={{ color: "#333" }} // Forcing dark text color with inline style
         >
           <option value="">All service categories</option>
           {categories.map((category) => (
@@ -97,9 +99,10 @@ export default function SearchForm() {
           id="service"
           name="service"
           placeholder="Service needed (e.g., pipe repair)"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
           value={searchData.service}
           onChange={handleChange}
+          style={{ color: "#333" }} // Forcing dark text color with inline style
         />
       </div>
       <button

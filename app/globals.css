@@ -92,3 +92,14 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+input,
+select,
+textarea {
+  color: #333 !important; /* Force dark text color */
+}
+
+::placeholder {
+  color: #6b7280 !important; /* Force visible placeholder color */
+  opacity: 1;
+}
