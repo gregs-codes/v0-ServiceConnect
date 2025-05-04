@@ -62,8 +62,12 @@ export async function GET(request, { params }) {
         rating,
         comment,
         created_at,
-        reviewer_id,
-        users (first_name, last_name, avatar_url)
+        reviewer:reviewer_id (
+          id,
+          first_name,
+          last_name,
+          avatar_url
+        )
       `)
       .eq("reviewee_id", id)
       .order("created_at", { ascending: false })
@@ -111,9 +115,9 @@ export async function GET(request, { params }) {
         comment: review.comment,
         date: review.created_at,
         reviewer: {
-          id: review.reviewer_id,
-          name: `${review.users.first_name} ${review.users.last_name}`,
-          avatar: review.users.avatar_url,
+          id: review.reviewer?.id,
+          name: `${review.reviewer?.first_name || ""} ${review.reviewer?.last_name || ""}`.trim() || "Anonymous",
+          avatar: review.reviewer?.avatar_url,
         },
       })),
     }

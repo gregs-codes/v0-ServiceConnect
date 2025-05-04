@@ -159,12 +159,15 @@ export default function ProviderProfile({ params }) {
                 <div className="border-t border-gray-200 pt-4 mb-6">
                   <h3 className="font-medium text-gray-700 mb-2">Skills:</h3>
                   <div className="flex flex-wrap gap-2">
-                    {skills.map((skill, index) => (
-                      <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                        {skill.name}
-                      </span>
-                    ))}
-                    {skills.length === 0 && <span className="text-gray-500">No skills listed</span>}
+                    {skills && skills.length > 0 ? (
+                      skills.map((skill, index) => (
+                        <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+                          {typeof skill === "string" ? skill : skill?.name || "Skill"}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-500">No skills listed</span>
+                    )}
                   </div>
                 </div>
 
@@ -274,22 +277,22 @@ export default function ProviderProfile({ params }) {
                       </div>
                     </div>
 
-                    {reviews.length > 0 ? (
+                    {reviews && reviews.length > 0 ? (
                       <div className="space-y-6">
                         {reviews.map((review, index) => (
                           <div key={index} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                             <div className="flex justify-between items-start mb-2">
                               <h3 className="font-bold">{review.reviewer?.name || "Anonymous"}</h3>
                               <span className="text-gray-500 text-sm">
-                                {new Date(review.date).toLocaleDateString()}
+                                {review.date ? new Date(review.date).toLocaleDateString() : "Unknown date"}
                               </span>
                             </div>
                             <div className="flex text-yellow-400 mb-2">
                               {[...Array(5)].map((_, i) => (
-                                <span key={i}>{i < review.rating ? "★" : "☆"}</span>
+                                <span key={i}>{i < (review.rating || 0) ? "★" : "☆"}</span>
                               ))}
                             </div>
-                            <p className="text-gray-700">{review.comment}</p>
+                            <p className="text-gray-700">{review.comment || "No comment provided."}</p>
                           </div>
                         ))}
                       </div>
