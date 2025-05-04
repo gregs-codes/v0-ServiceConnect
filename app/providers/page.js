@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Filter, ChevronDown, ChevronUp, CheckCircle, MapPin, Star, DollarSign } from "lucide-react"
+import { CheckCircle, MapPin, Star, DollarSign } from "lucide-react"
 import SearchForm from "@/components/search-form"
-import { getProviders, getServiceCategories } from "@/lib/api"
+import { getProviders } from "@/lib/api"
+import WelderCard from "@/components/welder-card"
 
 export default function Providers() {
   const searchParams = useSearchParams()
@@ -15,6 +16,10 @@ export default function Providers() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [filters, setFilters] = useState({
+    serviceType: "",
+    location: "",
+  })
 
   // Get search params once on initial render
   const initialLocation = searchParams.get("location") || ""
@@ -22,42 +27,64 @@ export default function Providers() {
   const initialCategory = searchParams.get("category") || "all"
 
   // Initialize filters with search params
-  const [filters, setFilters] = useState({
-    location: initialLocation,
-    service: initialService,
-    category: initialCategory,
-    minRating: "",
-    maxPrice: "",
-  })
+  // const [filters, setFilters] = useState({
+  //   location: initialLocation,
+  //   service: initialService,
+  //   category: initialCategory,
+  //   minRating: "",
+  //   maxPrice: "",
+  // })
 
-  // Fetch providers and categories on component mount
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
+    async function loadProviders() {
       try {
-        // Fetch service categories
-        const categoriesResponse = await getServiceCategories()
-        const fetchedCategories = categoriesResponse.data || []
-        setCategories(fetchedCategories)
-
-        // Fetch providers with filters
-        const apiFilters = {}
-        if (filters.location) apiFilters.location = filters.location
-        if (filters.category && filters.category !== "all") apiFilters.category = filters.category
-        if (filters.minRating) apiFilters.minRating = filters.minRating
-
-        const providersResponse = await getProviders(apiFilters)
-        setProviders(providersResponse.data || [])
+        setLoading(true)
+        const response = await getProviders(filters)
+        setProviders(response.data || [])
+        setError(null)
       } catch (err) {
-        console.error("Error fetching data:", err)
-        setError("Failed to load providers. Please try again later.")
+        console.error("Error loading providers:", err)
+        setError("Failed to load service providers. Please try again later.")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchData()
-  }, [filters.location, filters.category, filters.minRating])
+    loadProviders()
+  }, [filters])
+
+  const handleSearch = (searchFilters) => {
+    setFilters(searchFilters)
+  }
+
+  // Fetch providers and categories on component mount
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     setLoading(true)
+  //     try {
+  //       // Fetch service categories
+  //       const categoriesResponse = await getServiceCategories()
+  //       const fetchedCategories = categoriesResponse.data || []
+  //       setCategories(fetchedCategories)
+
+  //       // Fetch providers with filters
+  //       const apiFilters = {}
+  //       if (filters.location) apiFilters.location = filters.location
+  //       if (filters.category && filters.category !== "all") apiFilters.category = filters.category
+  //       if (filters.minRating) apiFilters.minRating = filters.minRating
+
+  //       const providersResponse = await getProviders(apiFilters)
+  //       setProviders(providersResponse.data || [])
+  //     } catch (err) {
+  //       console.error("Error fetching data:", err)
+  //       setError("Failed to load providers. Please try again later.")
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+
+  //   fetchData()
+  // }, [filters.location, filters.category, filters.minRating])
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
@@ -91,11 +118,11 @@ export default function Providers() {
 
         {/* Search Form */}
         <div className="bg-white p-4 rounded-lg shadow-md mb-8">
-          <SearchForm />
+          <SearchForm onSearch={handleSearch} />
         </div>
 
         {/* Category Tabs */}
-        <div className="bg-white rounded-lg shadow-md mb-8 overflow-x-auto">
+        {/* <div className="bg-white rounded-lg shadow-md mb-8 overflow-x-auto">
           <div className="flex p-1 min-w-max">
             <button
               key="all"
@@ -120,11 +147,11 @@ export default function Providers() {
               </button>
             ))}
           </div>
-        </div>
+        </div> */}
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters - Mobile Toggle */}
-          <div className="lg:hidden mb-4">
+          {/* <div className="lg:hidden mb-4">
             <button
               onClick={toggleFilter}
               className="w-full flex items-center justify-between bg-white p-4 rounded-lg shadow-md"
@@ -134,16 +161,16 @@ export default function Providers() {
               </span>
               {isFilterOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </button>
-          </div>
+          </div> */}
 
           {/* Filters */}
-          <div className={`${isFilterOpen ? "block" : "hidden"} lg:block lg:w-1/4`}>
+          {/* <div className={`${isFilterOpen ? "block" : "hidden"} lg:block lg:w-1/4`}>
             <div className="bg-white p-6 rounded-lg shadow-md sticky top-20">
               <h2 className="text-xl font-bold mb-6">Filters</h2>
 
               <div className="space-y-6">
                 {/* Rating Filter */}
-                <div>
+          {/* <div>
                   <label htmlFor="minRating" className="block text-gray-700 font-medium mb-2">
                     Minimum Rating
                   </label>
@@ -160,10 +187,10 @@ export default function Providers() {
                     <option value="3.5">3.5+</option>
                     <option value="3.0">3.0+</option>
                   </select>
-                </div>
+                </div> */}
 
-                {/* Price Filter */}
-                <div>
+          {/* Price Filter */}
+          {/* <div>
                   <label htmlFor="maxPrice" className="block text-gray-700 font-medium mb-2">
                     Maximum Hourly Rate
                   </label>
@@ -180,10 +207,10 @@ export default function Providers() {
                     <option value="100">$100 or less</option>
                     <option value="150">$150 or less</option>
                   </select>
-                </div>
+                </div> */}
 
-                {/* Reset Filters */}
-                <button
+          {/* Reset Filters */}
+          {/* <button
                   onClick={() =>
                     setFilters({
                       location: "",
@@ -199,10 +226,10 @@ export default function Providers() {
                 </button>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Providers List */}
-          <div className="lg:w-3/4">
+          {/* <div className="lg:w-3/4">
             <div className="mb-4 flex justify-between items-center">
               {loading ? (
                 <p className="text-gray-600">Loading providers...</p>
@@ -243,6 +270,30 @@ export default function Providers() {
                 >
                   Reset Filters
                 </button>
+              </div>
+            )}
+          </div> */}
+          <div className="mt-12">
+            {loading ? (
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-700"></div>
+              </div>
+            ) : error ? (
+              <div className="bg-red-50 p-4 rounded-lg text-center">
+                <p className="text-red-700">{error}</p>
+              </div>
+            ) : providers.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {providers.map((provider) => (
+                  <WelderCard key={provider.id} welder={provider} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <h2 className="text-2xl font-bold mb-2">No providers found</h2>
+                <p className="text-gray-600">
+                  Try adjusting your search filters or check back later for new service providers.
+                </p>
               </div>
             )}
           </div>
