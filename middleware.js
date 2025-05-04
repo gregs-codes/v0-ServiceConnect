@@ -8,7 +8,12 @@ export async function middleware(request) {
   // Check if the path requires authentication
   const path = request.nextUrl.pathname
 
-  // Allow public paths
+  // Allow all methods for auth endpoints
+  if (path.startsWith("/api/auth/")) {
+    return NextResponse.next()
+  }
+
+  // Allow GET requests for public paths
   if (publicPaths.some((publicPath) => path.startsWith(publicPath)) && request.method === "GET") {
     return NextResponse.next()
   }
