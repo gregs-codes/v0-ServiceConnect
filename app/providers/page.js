@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { getProviders, getServiceCategories } from "@/lib/api"
 import ProviderCard from "@/components/provider-card"
-import { Filter, ChevronDown, ChevronUp } from "lucide-react"
+import { Filter, ChevronDown, ChevronUp, Search } from "lucide-react"
 
 export default function ProvidersPage() {
   const searchParams = useSearchParams()
@@ -17,11 +17,12 @@ export default function ProvidersPage() {
   // Get search params
   const initialLocation = searchParams.get("location") || ""
   const initialService = searchParams.get("service") || ""
+  const initialCategory = searchParams.get("category") || ""
 
   // Initialize filters
   const [filters, setFilters] = useState({
     location: initialLocation,
-    serviceType: initialService,
+    serviceType: initialCategory || initialService, // Use either category or service
     minRating: "",
     maxPrice: "",
   })
@@ -78,21 +79,66 @@ export default function ProvidersPage() {
     setIsFilterOpen(!isFilterOpen)
   }
 
-  // Filter providers by max price client-side (if we had hourly rates)
-  const filteredProviders = providers
-
   // Filter providers by minimum rating client-side
   const finalFilteredProviders = filters.minRating
-    ? filteredProviders.filter(
+    ? providers.filter(
         (provider) => provider.averageRating !== null && provider.averageRating >= Number.parseFloat(filters.minRating),
       )
-    : filteredProviders
+    : providers
 
   return (
-    <main className="min-h-screen py-12">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl md:text-4xl font-bold mb-6">Find Service Providers</h1>
+    <main className="min-h-screen">
+      {/* Blue Hero Section */}
+      <div className="bg-blue-600 text-white py-12">
+        <div className="container mx-auto px-4">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">Find Service Providers</h1>
+          <p className="text-xl mb-8 max-w-3xl">
+            Connect with qualified professionals for your home, business, or personal projects
+          </p>
 
+          {/* Quick Search Bar */}
+          <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm max-w-3xl">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Enter your location"
+                  className="w-full px-4 py-3 border border-blue-400 bg-white/90 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  value={filters.location}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, location: e.target.value }))}
+                />
+              </div>
+              <div className="flex-1">
+                <select
+                  className="w-full px-4 py-3 border border-blue-400 bg-white/90 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-900"
+                  value={filters.serviceType}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, serviceType: e.target.value }))}
+                >
+                  <option value="">All service categories</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={() => {
+                  // This will trigger the useEffect since we're changing the filters
+                  setFilters((prev) => ({ ...prev }))
+                }}
+                className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+              >
+                <Search className="h-5 w-5 mr-2" />
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters - Mobile Toggle */}
           <div className="lg:hidden mb-4">
@@ -101,7 +147,7 @@ export default function ProvidersPage() {
               className="w-full flex items-center justify-between bg-white p-4 rounded-lg shadow-md"
             >
               <span className="flex items-center font-medium">
-                <Filter className="h-5 w-5 mr-2" /> Filters
+                <Filter className="h-5 w-5 mr-2" /> Advanced Filters
               </span>
               {isFilterOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </button>
@@ -110,7 +156,7 @@ export default function ProvidersPage() {
           {/* Filters */}
           <div className={`${isFilterOpen ? "block" : "hidden"} lg:block lg:w-1/4`}>
             <div className="bg-white p-6 rounded-lg shadow-md sticky top-20">
-              <h2 className="text-xl font-bold mb-6">Filters</h2>
+              <h2 className="text-xl font-bold mb-6">Advanced Filters</h2>
 
               <div className="space-y-6">
                 {/* Location Filter */}
@@ -196,8 +242,12 @@ export default function ProvidersPage() {
               ) : error ? (
                 <p className="text-red-600">{error}</p>
               ) : (
-                <p className="text-gray-600">{finalFilteredProviders.length} service providers found</p>
+                <p className="text-gray-600">
+                  <strong>{finalFilteredProviders.length}</strong> service providers found
+                </p>
               )}
+
+              {/* Sort options could go here */}
             </div>
 
             {loading ? (

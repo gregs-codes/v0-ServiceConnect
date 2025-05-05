@@ -52,6 +52,7 @@ export default function SearchForm({ darkMode = false }) {
     router.push(`/providers?${queryParams.toString()}`)
   }
 
+  // Force consistent styling for inputs
   const inputClasses = `w-full px-4 py-3 border ${
     darkMode ? "border-blue-600 bg-white/90" : "border-gray-300 bg-white"
   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500`
@@ -78,6 +79,7 @@ export default function SearchForm({ darkMode = false }) {
           className={inputClasses}
           value={searchData.location}
           onChange={handleChange}
+          style={{ color: "#333" }} // Force text color
         />
       </div>
       <div className="flex-1">
@@ -91,6 +93,7 @@ export default function SearchForm({ darkMode = false }) {
           value={searchData.category}
           onChange={handleChange}
           disabled={loading}
+          style={{ color: "#333" }} // Force text color
         >
           <option value="">All service categories</option>
           {categories.map((category) => (
@@ -112,6 +115,7 @@ export default function SearchForm({ darkMode = false }) {
           className={inputClasses}
           value={searchData.service}
           onChange={handleChange}
+          style={{ color: "#333" }} // Force text color
         />
       </div>
       <button type="submit" className={buttonClasses}>
