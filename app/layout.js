@@ -1,14 +1,13 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
-import Navbar from "@/components/navbar"
-import Footer from "@/components/footer"
-import { AuthProvider } from "@/contexts/AuthContext"
+import SiteHeader from "@/components/site-header"
+import { Providers } from "@/components/providers"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "ServiceConnect - Find Professional Service Providers",
-  description: "Connect with professional service providers tailored to your needs",
+  title: "ServiceConnect - Find and Hire Service Professionals",
+  description: "Connect with skilled service providers for your projects",
     generator: 'v0.dev'
 }
 
@@ -16,11 +15,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          <Navbar />
-          {children}
-          <Footer />
-        </AuthProvider>
+        <div className="relative flex min-h-screen flex-col">
+          <SiteHeader />
+          <div className="flex-1">
+            <Providers>{children}</Providers>
+          </div>
+        </div>
       </body>
     </html>
   )

@@ -31,22 +31,31 @@ export default function ProvidersPage() {
     async function loadData() {
       try {
         setLoading(true)
+        setError(null)
 
         // Load service categories
-        const categoriesResponse = await getServiceCategories()
-        setCategories(categoriesResponse.data || [])
+        try {
+          const categoriesResponse = await getServiceCategories()
+          setCategories(categoriesResponse.data || [])
+        } catch (err) {
+          console.error("Error loading categories:", err)
+          setCategories([])
+          // Don't set the error state here to allow providers to still load
+        }
 
         // Load providers with filters
         const apiFilters = {}
         if (filters.location) apiFilters.location = filters.location
-        if (filters.serviceType) apiFilters.serviceType = filters.serviceType
+        if (filters.serviceType) apiFilters.categoryId = filters.serviceType
 
-        const providersResponse = await getProviders(apiFilters)
-        setProviders(providersResponse.data || [])
-        setError(null)
-      } catch (err) {
-        console.error("Error loading data:", err)
-        setError("Failed to load service providers. Please try again later.")
+        try {
+          const providersResponse = await getProviders(apiFilters)
+          setProviders(providersResponse.data || [])
+        } catch (err) {
+          console.error("Error loading providers:", err)
+          setError("Failed to load service providers. Please try again later.")
+          setProviders([])
+        }
       } finally {
         setLoading(false)
       }
@@ -69,14 +78,14 @@ export default function ProvidersPage() {
     setIsFilterOpen(!isFilterOpen)
   }
 
-  // Filter providers by max price client-side
-  const filteredProviders = filters.maxPrice
-    ? providers.filter((provider) => provider.hourlyRate <= Number.parseFloat(filters.maxPrice))
-    : providers
+  // Filter providers by max price client-side (if we had hourly rates)
+  const filteredProviders = providers
 
   // Filter providers by minimum rating client-side
   const finalFilteredProviders = filters.minRating
-    ? filteredProviders.filter((provider) => provider.rating >= Number.parseFloat(filters.minRating))
+    ? filteredProviders.filter(
+        (provider) => provider.averageRating !== null && provider.averageRating >= Number.parseFloat(filters.minRating),
+      )
     : filteredProviders
 
   return (
@@ -161,26 +170,6 @@ export default function ProvidersPage() {
                   </select>
                 </div>
 
-                {/* Price Filter */}
-                <div>
-                  <label htmlFor="maxPrice" className="block text-gray-700 font-medium mb-2">
-                    Maximum Hourly Rate
-                  </label>
-                  <select
-                    id="maxPrice"
-                    name="maxPrice"
-                    value={filters.maxPrice}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Any Price</option>
-                    <option value="50">$50 or less</option>
-                    <option value="75">$75 or less</option>
-                    <option value="100">$100 or less</option>
-                    <option value="150">$150 or less</option>
-                  </select>
-                </div>
-
                 {/* Reset Filters */}
                 <button
                   onClick={() =>
@@ -214,6 +203,17 @@ export default function ProvidersPage() {
             {loading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-700"></div>
+              </div>
+            ) : error ? (
+              <div className="bg-white p-8 rounded-lg shadow-md text-center">
+                <h3 className="text-xl font-bold mb-2 text-red-600">Error</h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Try Again
+                </button>
               </div>
             ) : finalFilteredProviders.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

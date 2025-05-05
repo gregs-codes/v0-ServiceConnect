@@ -2,113 +2,81 @@ import Link from "next/link"
 import { Calendar, MapPin, DollarSign, Clock } from "lucide-react"
 
 export default function ProjectCard({ project }) {
-  // Ensure we have a valid project object with fallbacks
-  const data = project || {}
-
-  // Extract properties with fallbacks
-  const id = data.id || "unknown"
-  const title = data.title || "Untitled Project"
-  const description = data.description || "No description provided"
-  const location = data.location || "Remote"
-  const isRemote = data.isRemote || false
-  const status = data.status || "open"
-  const createdAt = data.createdAt ? new Date(data.createdAt) : new Date()
-  const deadline = data.deadline ? new Date(data.deadline) : null
-  const budgetMin = data.budgetMin || 0
-  const budgetMax = data.budgetMax || 0
-  const category = data.category || null
-
-  // Format date
-  const formatDate = (date) => {
-    if (!date) return "Not specified"
-    return new Intl.DateTimeFormat("en-US", {
+  // Format date to be more readable
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    }).format(date)
+    })
   }
 
-  // Status badge color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "open":
-        return "bg-green-100 text-green-800"
-      case "in_progress":
-        return "bg-blue-100 text-blue-800"
-      case "completed":
-        return "bg-purple-100 text-purple-800"
-      case "cancelled":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+  // Format status for display
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      open: { color: "bg-green-100 text-green-800", label: "Open" },
+      in_progress: { color: "bg-blue-100 text-blue-800", label: "In Progress" },
+      completed: { color: "bg-gray-100 text-gray-800", label: "Completed" },
+      cancelled: { color: "bg-red-100 text-red-800", label: "Cancelled" },
     }
+
+    const config = statusConfig[status] || statusConfig.open
+
+    return <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>{config.label}</span>
   }
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="p-6">
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="text-xl font-bold">{title}</h3>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-            {status.replace("_", " ")}
-          </span>
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-1">
+            <Link href={`/projects/${project.id}`} className="hover:text-blue-700 transition-colors">
+              {project.title}
+            </Link>
+          </h3>
+          {getStatusBadge(project.status)}
         </div>
 
-        <p className="text-gray-600 mb-4 line-clamp-2">{description}</p>
+        <p className="text-gray-600 mb-4 line-clamp-2">{project.description}</p>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center">
-            <MapPin className="h-4 w-4 text-gray-500 mr-2" />
-            <span className="text-gray-700 text-sm">
-              {location} {isRemote && "(Remote OK)"}
-            </span>
+          <div className="flex items-center text-gray-600">
+            <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
+            <span>${project.budget?.toLocaleString() || "Not specified"}</span>
           </div>
 
-          <div className="flex items-center">
-            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-            <span className="text-gray-700 text-sm">{deadline ? formatDate(deadline) : "No deadline"}</span>
+          <div className="flex items-center text-gray-600">
+            <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+            <span>{project.location || "Remote"}</span>
           </div>
 
-          <div className="flex items-center">
-            <DollarSign className="h-4 w-4 text-gray-500 mr-2" />
-            <span className="text-gray-700 text-sm">
-              {budgetMin && budgetMax
-                ? `$${budgetMin} - $${budgetMax}`
-                : budgetMin
-                  ? `From $${budgetMin}`
-                  : budgetMax
-                    ? `Up to $${budgetMax}`
-                    : "Budget not specified"}
-            </span>
+          <div className="flex items-center text-gray-600">
+            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+            <span>{formatDate(project.created_at)}</span>
           </div>
 
-          <div className="flex items-center">
-            <Clock className="h-4 w-4 text-gray-500 mr-2" />
-            <span className="text-gray-700 text-sm">Posted {formatDate(createdAt)}</span>
+          <div className="flex items-center text-gray-600">
+            <Clock className="h-4 w-4 mr-2 text-gray-400" />
+            <span>{project.estimated_duration || "Not specified"}</span>
           </div>
         </div>
 
-        {category && (
-          <div className="mb-4">
-            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{category.name}</span>
-          </div>
-        )}
-
-        <div className="flex space-x-3">
-          <Link
-            href={`/projects/${id}`}
-            className="bg-blue-700 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-800 transition-colors flex-1 text-center"
-          >
-            View Details
-          </Link>
-          {status === "open" && (
-            <Link
-              href={`/projects/${id}/apply`}
-              className="border border-blue-700 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors flex-1 text-center"
-            >
-              Apply
-            </Link>
+        <div className="flex items-center mt-4">
+          {project.service_categories && (
+            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              {project.service_categories.name}
+            </span>
           )}
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <Link
+            href={`/projects/${project.id}`}
+            className="text-blue-700 font-medium hover:text-blue-800 transition-colors"
+          >
+            View Details →
+          </Link>
         </div>
       </div>
     </div>

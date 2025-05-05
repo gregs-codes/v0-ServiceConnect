@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ArrowRight, CheckCircle } from "lucide-react"
+import SearchForm from "@/components/search-form"
 
 export default function Home() {
   // Sample services data
@@ -35,6 +36,9 @@ export default function Home() {
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">Connect with the Right Services</h1>
             <p className="text-xl mb-8">Find and connect with professional services tailored to your needs</p>
+            <div className="max-w-4xl mx-auto mb-8">
+              <SearchForm darkMode={true} />
+            </div>
             <Link
               href="/services"
               className="bg-white text-blue-700 px-6 py-3 rounded-lg font-medium inline-flex items-center hover:bg-blue-50 transition-colors"

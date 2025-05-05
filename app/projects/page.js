@@ -26,20 +26,30 @@ export default function ProjectsPage() {
         setLoading(true)
 
         // Load service categories
-        const categoriesResponse = await getServiceCategories()
-        setCategories(categoriesResponse.data || [])
+        try {
+          const categoriesResponse = await getServiceCategories()
+          setCategories(categoriesResponse.data || [])
+        } catch (err) {
+          console.error("Error loading categories:", err)
+          setCategories([])
+        }
 
         // Load projects with filters
         const apiFilters = {}
         if (filters.status) apiFilters.status = filters.status
         if (filters.categoryId) apiFilters.categoryId = filters.categoryId
 
-        const projectsResponse = await getProjects(apiFilters)
-        setProjects(projectsResponse.data || [])
-        setError(null)
+        try {
+          const projectsResponse = await getProjects(apiFilters)
+          setProjects(projectsResponse.data || [])
+        } catch (err) {
+          console.error("Error loading projects:", err)
+          setError("Failed to load projects. Please try again later.")
+          setProjects([])
+        }
       } catch (err) {
-        console.error("Error loading data:", err)
-        setError("Failed to load projects. Please try again later.")
+        console.error("Error in loadData:", err)
+        setError("An unexpected error occurred. Please try again later.")
       } finally {
         setLoading(false)
       }

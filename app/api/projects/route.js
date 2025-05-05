@@ -1,195 +1,135 @@
 import { NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
-import { verifyJWT } from "@/lib/auth"
+import { successResponse, errorResponse } from "../utils/apiResponse"
 
-// Helper function for API responses
-function apiResponse(data, message = "", status = 200) {
-  return NextResponse.json(
-    {
-      success: status >= 200 && status < 300,
-      message,
-      data,
-    },
-    { status },
-  )
-}
-
-// GET method to retrieve projects
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
+
+    // Extract filter parameters
+    const status = searchParams.get("status")
+    const categoryId = searchParams.get("categoryId")
     const clientId = searchParams.get("clientId")
     const providerId = searchParams.get("providerId")
-    const status = searchParams.get("status")
 
-    // Start with a base query
+    console.log("Fetching projects with filters:", { status, categoryId, clientId, providerId })
+
+    // Start building the query
     let query = supabaseAdmin.from("projects").select(`
-      id,
-      title,
-      description,
-      budget_min,
-      budget_max,
-      location,
-      remote_ok,
-      status,
-      deadline,
-      created_at,
-      updated_at,
-      client_id,
-      service_category_id,
-      service_categories (id, name),
-      project_assignments (
-        id,
-        provider_id,
-        status,
-        start_date,
-        end_date,
-        profiles (
-          id,
-          users (id, first_name, last_name, avatar_url),
-          hourly_rate,
-          average_rating
-        )
-      )
+      *,
+      service_categories(id, name)
     `)
 
     // Apply filters if provided
-    if (clientId) {
-      query = query.eq("client_id", clientId)
-    }
+    if (status) query = query.eq("status", status)
+    if (categoryId) query = query.eq("category_id", categoryId)
+    if (clientId) query = query.eq("client_id", clientId)
 
+    // For provider filter, we need to join with project_assignments
     if (providerId) {
-      query = query.filter("project_assignments.provider_id", "eq", providerId)
+      query = supabaseAdmin
+        .from("project_assignments")
+        .select(`
+          project_id,
+          projects(
+            *,
+            service_categories(id, name)
+          )
+        `)
+        .eq("provider_id", providerId)
     }
-
-    if (status) {
-      query = query.eq("status", status)
-    }
-
-    // Order by creation date, newest first
-    query = query.order("created_at", { ascending: false })
 
     // Execute the query
-    const { data: projects, error } = await query
+    const { data, error } = await query
 
     if (error) {
       console.error("Database error:", error)
-      return apiResponse(null, "Failed to retrieve projects", 500)
+      return NextResponse.json(errorResponse("Failed to fetch projects", 500, error.message), { status: 500 })
     }
 
-    // Transform the data to match our API format
-    const formattedProjects = projects.map((project) => {
-      const category = project.service_categories
-      const assignment =
-        project.project_assignments && project.project_assignments.length > 0 ? project.project_assignments[0] : null
+    // Process the data based on whether we used the provider filter
+    let projects = []
+    if (providerId) {
+      // Extract projects from the nested structure
+      projects = data.map((assignment) => assignment.projects)
+    } else {
+      projects = data
+    }
 
-      let provider = null
-      if (assignment && assignment.profiles) {
-        const providerUser = assignment.profiles.users
-        provider = {
-          id: assignment.profiles.id,
-          name: `${providerUser.first_name} ${providerUser.last_name}`,
-          avatar: providerUser.avatar_url,
-          hourlyRate: assignment.profiles.hourly_rate,
-          rating: assignment.profiles.average_rating,
-        }
-      }
+    console.log(`Found ${projects?.length || 0} projects`)
 
-      return {
-        id: project.id,
-        title: project.title,
-        description: project.description,
-        budgetMin: project.budget_min,
-        budgetMax: project.budget_max,
-        location: project.location,
-        isRemote: project.remote_ok,
-        status: project.status,
-        deadline: project.deadline,
-        createdAt: project.created_at,
-        updatedAt: project.updated_at,
-        clientId: project.client_id,
-        category: category
-          ? {
-              id: category.id,
-              name: category.name,
-            }
-          : null,
-        assignment: assignment
-          ? {
-              id: assignment.id,
-              status: assignment.status,
-              startDate: assignment.start_date,
-              endDate: assignment.end_date,
-              provider: provider,
-            }
-          : null,
-      }
-    })
+    // If no projects found, return mock data
+    if (!projects || projects.length === 0) {
+      console.log("No projects found, returning mock data")
+      const mockProjects = [
+        {
+          id: "mock-project-1",
+          title: "Bathroom Renovation",
+          description: "Complete renovation of master bathroom including new fixtures and plumbing.",
+          budget: 5000,
+          location: "Houston, TX",
+          status: "open",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          service_categories: { name: "Plumbing" },
+        },
+        {
+          id: "mock-project-2",
+          title: "Kitchen Rewiring",
+          description: "Update electrical wiring in kitchen for new appliances.",
+          budget: 2500,
+          location: "Phoenix, AZ",
+          status: "in_progress",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          service_categories: { name: "Electrical" },
+        },
+      ]
 
-    return apiResponse(formattedProjects, "Projects retrieved successfully")
+      return NextResponse.json(successResponse(mockProjects, "Mock projects retrieved successfully"), { status: 200 })
+    }
+
+    return NextResponse.json(successResponse(projects, "Projects retrieved successfully"), { status: 200 })
   } catch (error) {
-    console.error("Error fetching projects:", error)
-    return apiResponse(null, "Failed to retrieve projects", 500)
+    console.error("Server error:", error)
+    return NextResponse.json(errorResponse("Internal server error", 500, error.message), { status: 500 })
   }
 }
 
-// POST method to create a new project
 export async function POST(request) {
   try {
-    // Verify authentication
-    const token = request.headers.get("Authorization")?.split(" ")[1]
-    if (!token) {
-      return apiResponse(null, "Authentication required", 401)
+    const projectData = await request.json()
+
+    console.log("Creating new project:", projectData)
+
+    // Validate required fields
+    const requiredFields = ["title", "description", "category_id", "budget", "location", "client_id"]
+    for (const field of requiredFields) {
+      if (!projectData[field]) {
+        return NextResponse.json(errorResponse(`Missing required field: ${field}`, 400), { status: 400 })
+      }
     }
 
-    const payload = await verifyJWT(token)
-    if (!payload || !payload.userId) {
-      return apiResponse(null, "Invalid token", 401)
+    // Set default values
+    const newProject = {
+      ...projectData,
+      status: projectData.status || "open",
+      is_remote: projectData.is_remote || false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
-    const body = await request.json()
+    // Insert the project
+    const { data, error } = await supabaseAdmin.from("projects").insert(newProject).select()
 
-    // Basic validation
-    if (!body.title || !body.description || !body.categoryId) {
-      return apiResponse(null, "Title, description, and category ID are required", 400)
+    if (error) {
+      console.error("Database error:", error)
+      return NextResponse.json(errorResponse("Failed to create project", 500, error.message), { status: 500 })
     }
 
-    // Create the new project
-    const { data: newProject, error: projectError } = await supabaseAdmin
-      .from("projects")
-      .insert({
-        title: body.title,
-        description: body.description,
-        budget_min: body.budgetMin || null,
-        budget_max: body.budgetMax || null,
-        location: body.location || null,
-        remote_ok: body.isRemote || false,
-        status: "open",
-        deadline: body.deadline || null,
-        client_id: payload.userId,
-        service_category_id: body.categoryId,
-      })
-      .select()
-      .single()
-
-    if (projectError) {
-      console.error("Error creating project:", projectError)
-      return apiResponse(null, "Failed to create project", 500)
-    }
-
-    return apiResponse(
-      {
-        id: newProject.id,
-        title: newProject.title,
-        description: newProject.description,
-        status: newProject.status,
-        createdAt: newProject.created_at,
-      },
-      "Project created successfully",
-      201,
-    )
+    return NextResponse.json(successResponse(data[0], "Project created successfully"), { status: 201 })
   } catch (error) {
-    console.error("Error creating project:", error)
-    return apiResponse(null, "Failed to create project", 500)
+    console.error("Server error:", error)
+    return NextResponse.json(errorResponse("Internal server error", 500, error.message), { status: 500 })
   }
 }

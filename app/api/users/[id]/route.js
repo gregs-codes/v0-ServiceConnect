@@ -1,124 +1,131 @@
-import { createClient } from "@/lib/supabase"
-import { apiResponse } from "@/app/api/utils/apiResponse"
-import { verifyAuth } from "@/lib/auth"
+import { NextResponse } from "next/server"
+import { getSupabaseAdmin } from "@/lib/supabase"
 
-// GET user profile
 export async function GET(request, { params }) {
   try {
     const { id } = params
-    const supabase = createClient()
 
-    // Verify authentication
-    const authResult = await verifyAuth(request)
-    if (!authResult.success) {
-      return apiResponse({
-        status: 401,
-        message: "Unauthorized",
-      })
+    if (!id) {
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 })
     }
 
-    // Only allow users to access their own profile
-    if (authResult.userId !== id) {
-      return apiResponse({
-        status: 403,
-        message: "Forbidden: You can only access your own profile",
-      })
+    const supabase = getSupabaseAdmin()
+
+    // Get the user profile
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select(`
+        id,
+        user_id,
+        bio,
+        location,
+        phone,
+        is_service_provider,
+        created_at,
+        updated_at,
+        users (
+          id,
+          email,
+          first_name,
+          last_name,
+          avatar_url,
+          is_email_verified
+        )
+      `)
+      .eq("id", id)
+      .single()
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError)
+      return NextResponse.json({ error: "Failed to fetch user profile" }, { status: 500 })
     }
 
-    // Get user profile from profiles table
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", id).single()
-
-    if (error) {
-      console.error("Error fetching user profile:", error)
-      return apiResponse({
-        status: 500,
-        message: "Error fetching user profile",
-        error: error.message,
-      })
+    if (!profileData) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 })
     }
 
-    if (!data) {
-      return apiResponse({
-        status: 404,
-        message: "User profile not found",
-      })
+    // Format the user data
+    const userData = {
+      id: profileData.id,
+      userId: profileData.user_id,
+      firstName: profileData.users?.first_name,
+      lastName: profileData.users?.last_name,
+      email: profileData.users?.email,
+      avatar: profileData.users?.avatar_url,
+      isEmailVerified: profileData.users?.is_email_verified,
+      bio: profileData.bio,
+      location: profileData.location,
+      phone: profileData.phone,
+      isServiceProvider: profileData.is_service_provider,
+      createdAt: profileData.created_at,
+      updatedAt: profileData.updated_at,
     }
 
-    return apiResponse({
-      status: 200,
-      data,
-    })
+    return NextResponse.json({ data: userData })
   } catch (error) {
-    console.error("Error in GET user profile:", error)
-    return apiResponse({
-      status: 500,
-      message: "Internal server error",
-      error: error.message,
-    })
+    console.error("Error in users API:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
-// PUT update user profile
 export async function PUT(request, { params }) {
   try {
     const { id } = params
     const body = await request.json()
-    const supabase = createClient()
 
-    // Verify authentication
-    const authResult = await verifyAuth(request)
-    if (!authResult.success) {
-      return apiResponse({
-        status: 401,
-        message: "Unauthorized",
-      })
+    if (!id) {
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 })
     }
 
-    // Only allow users to update their own profile
-    if (authResult.userId !== id) {
-      return apiResponse({
-        status: 403,
-        message: "Forbidden: You can only update your own profile",
-      })
+    const supabase = getSupabaseAdmin()
+
+    // Get the user profile to check if it exists
+    const { data: existingProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, user_id")
+      .eq("id", id)
+      .single()
+
+    if (profileError || !existingProfile) {
+      console.error("Error fetching user profile:", profileError)
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 })
     }
 
-    // Update user profile
-    const { data, error } = await supabase
+    // Update the user data in the users table
+    const { error: userUpdateError } = await supabase
+      .from("users")
+      .update({
+        first_name: body.firstName,
+        last_name: body.lastName,
+        email: body.email,
+      })
+      .eq("id", existingProfile.user_id)
+
+    if (userUpdateError) {
+      console.error("Error updating user:", userUpdateError)
+      return NextResponse.json({ error: "Failed to update user" }, { status: 500 })
+    }
+
+    // Update the profile data
+    const { data: updatedProfile, error: profileUpdateError } = await supabase
       .from("profiles")
       .update({
-        first_name: body.first_name,
-        last_name: body.last_name,
-        email: body.email,
-        phone: body.phone,
         bio: body.bio,
         location: body.location,
-        is_service_provider: body.is_service_provider,
+        phone: body.phone,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
       .select()
-      .single()
 
-    if (error) {
-      console.error("Error updating user profile:", error)
-      return apiResponse({
-        status: 500,
-        message: "Error updating user profile",
-        error: error.message,
-      })
+    if (profileUpdateError) {
+      console.error("Error updating profile:", profileUpdateError)
+      return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
     }
 
-    return apiResponse({
-      status: 200,
-      message: "Profile updated successfully",
-      data,
-    })
+    return NextResponse.json({ data: updatedProfile[0], message: "Profile updated successfully" })
   } catch (error) {
-    console.error("Error in PUT user profile:", error)
-    return apiResponse({
-      status: 500,
-      message: "Internal server error",
-      error: error.message,
-    })
+    console.error("Error in users API:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

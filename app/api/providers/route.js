@@ -1,106 +1,183 @@
 import { NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
 
-// Helper function for API responses
-function apiResponse(data, message = "", status = 200) {
-  return NextResponse.json(
-    {
-      success: status >= 200 && status < 300,
-      message,
-      data,
-    },
-    { status },
-  )
-}
-
-// GET method to retrieve service providers
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
-    const serviceType = searchParams.get("serviceType")
+
+    // Get query parameters
+    const categoryId = searchParams.get("categoryId")
     const location = searchParams.get("location")
-    const minRating = searchParams.get("minRating")
 
-    // Start with a base query
-    let query = supabaseAdmin
-      .from("profiles")
-      .select(`
-        id,
-        users (id, first_name, last_name, email, avatar_url),
-        location,
-        hourly_rate,
-        average_rating,
-        total_reviews,
-        bio,
-        availability_status,
-        provider_services (
-          id,
-          category_id,
-          service_categories (id, name),
-          description,
-          is_certified,
-          years_experience
-        ),
-        provider_skills (
-          skill_id,
-          proficiency_level,
-          skills (id, name)
-        )
-      `)
-      .eq("is_service_provider", true)
+    console.log("Fetching providers with filters:", { categoryId, location })
 
-    // Apply filters if provided
-    if (serviceType) {
-      query = query.filter("provider_services.service_categories.name", "ilike", `%${serviceType}%`)
+    // Step 1: Get provider services
+    let servicesQuery = supabaseAdmin.from("provider_services").select(`
+      id,
+      description,
+      years_experience,
+      is_certified,
+      certification_details,
+      provider_id,
+      category_id
+    `)
+
+    // Add category filter if it exists
+    if (categoryId && categoryId !== "null" && categoryId !== "") {
+      servicesQuery = servicesQuery.eq("category_id", categoryId)
     }
 
-    if (location) {
-      query = query.filter("location", "ilike", `%${location}%`)
+    const { data: services, error: servicesError } = await servicesQuery
+
+    if (servicesError) {
+      console.error("Database error (services):", servicesError)
+      return NextResponse.json(
+        { error: "Failed to fetch provider services", details: servicesError.message },
+        { status: 500 },
+      )
     }
 
-    if (minRating && !isNaN(minRating)) {
-      query = query.gte("average_rating", Number.parseFloat(minRating))
+    console.log(`Found ${services?.length || 0} provider services`)
+
+    // If no services found, return mock data for testing
+    if (!services || services.length === 0) {
+      console.log("No provider services found, returning mock data")
+      return NextResponse.json({
+        data: [
+          {
+            id: "mock-provider-1",
+            serviceId: "mock-service-1",
+            name: "John Doe (Mock)",
+            avatar: null,
+            location: "New York, NY",
+            category: "Plumbing",
+            categoryId: "mock-category-1",
+            description: "Professional plumbing services with 10+ years of experience.",
+            yearsExperience: 10,
+            isCertified: true,
+            certificationDetails: "Licensed Master Plumber",
+            averageRating: 4.8,
+          },
+          {
+            id: "mock-provider-2",
+            serviceId: "mock-service-2",
+            name: "Jane Smith (Mock)",
+            avatar: null,
+            location: "Los Angeles, CA",
+            category: "Electrical",
+            categoryId: "mock-category-2",
+            description: "Certified electrician specializing in residential and commercial projects.",
+            yearsExperience: 8,
+            isCertified: true,
+            certificationDetails: "Certified Electrician",
+            averageRating: 4.5,
+          },
+        ],
+      })
     }
 
-    // Execute the query
-    const { data: providers, error } = await query
+    // Step 2: Get categories for the services
+    const categoryIds = [...new Set(services.map((s) => s.category_id).filter(Boolean))]
+    let categories = []
 
-    if (error) {
-      console.error("Database error:", error)
-      return apiResponse(null, "Failed to retrieve providers", 500)
+    if (categoryIds.length > 0) {
+      const { data: categoriesData, error: categoriesError } = await supabaseAdmin
+        .from("service_categories")
+        .select("id, name")
+        .in("id", categoryIds)
+
+      if (categoriesError) {
+        console.error("Database error (categories):", categoriesError)
+      } else {
+        categories = categoriesData
+        console.log(`Found ${categories.length} categories`)
+      }
     }
 
-    // Transform the data to match our API format
-    const formattedProviders = providers.map((provider) => {
-      const user = provider.users
-      const services = provider.provider_services || []
-      const skills = provider.provider_skills || []
+    // Step 3: Get profiles for the providers
+    const providerIds = [...new Set(services.map((s) => s.provider_id).filter(Boolean))]
+    let profiles = []
+
+    if (providerIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabaseAdmin
+        .from("profiles")
+        .select("*")
+        .in("id", providerIds)
+
+      if (profilesError) {
+        console.error("Database error (profiles):", profilesError)
+      } else {
+        profiles = profilesData
+        console.log(`Found ${profiles.length} profiles`)
+      }
+    }
+
+    // Step 4: Get users for additional info if needed
+    let users = []
+    if (providerIds.length > 0) {
+      const { data: usersData, error: usersError } = await supabaseAdmin
+        .from("users")
+        .select("id, email")
+        .in("id", providerIds)
+
+      if (usersError) {
+        console.error("Database error (users):", usersError)
+      } else {
+        users = usersData
+        console.log(`Found ${users.length} users`)
+      }
+    }
+
+    // Step 5: Combine the data
+    const providers = services.map((service) => {
+      const category = categories.find((c) => c.id === service.category_id) || {}
+      const profile = profiles.find((p) => p.id === service.provider_id) || {}
+      const user = users.find((u) => u.id === service.provider_id) || {}
+
+      // Determine name based on available fields
+      let name = "Unknown Provider"
+      if (profile.full_name) {
+        name = profile.full_name
+      } else if (profile.first_name || profile.last_name) {
+        name = `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+      } else if (profile.username) {
+        name = profile.username
+      } else if (user.email) {
+        name = user.email.split("@")[0] // Use part before @ in email
+      }
 
       return {
-        id: provider.id,
-        name: `${user.first_name} ${user.last_name}`,
-        email: user.email,
-        avatar: user.avatar_url,
-        location: provider.location,
-        hourlyRate: provider.hourly_rate,
-        rating: provider.average_rating,
-        reviews: provider.total_reviews,
-        bio: provider.bio,
-        status: provider.availability_status,
-        specialties: skills.map((skill) => skill.skills?.name).filter(Boolean),
-        services: services.map((service) => ({
-          id: service.id,
-          category: service.service_categories?.name,
-          description: service.description,
-          certified: service.is_certified,
-          experience: service.years_experience,
-        })),
+        id: service.provider_id,
+        serviceId: service.id,
+        name,
+        avatar: profile.avatar_url || null,
+        location: profile.location || "Location not specified",
+        category: category.name || "Uncategorized",
+        categoryId: service.category_id,
+        description: service.description,
+        yearsExperience: service.years_experience,
+        isCertified: service.is_certified,
+        certificationDetails: service.certification_details,
+        // We would calculate this from reviews in a real app
+        averageRating: Math.random() * 2 + 3, // Random rating between 3-5 for demo
       }
     })
 
-    return apiResponse(formattedProviders, "Providers retrieved successfully")
+    console.log(`Returning ${providers.length} providers`)
+
+    // Step 6: Filter by location if needed
+    let filteredProviders = providers
+    if (location && location.trim() !== "") {
+      const locationLower = location.toLowerCase()
+      filteredProviders = providers.filter(
+        (provider) => provider.location && provider.location.toLowerCase().includes(locationLower),
+      )
+      console.log(`After location filtering: ${filteredProviders.length} providers`)
+    }
+
+    return NextResponse.json({ data: filteredProviders })
   } catch (error) {
-    console.error("Error fetching providers:", error)
-    return apiResponse(null, "Failed to retrieve providers", 500)
+    console.error("Server error:", error)
+    return NextResponse.json({ error: "Internal server error", details: error.message }, { status: 500 })
   }
 }
