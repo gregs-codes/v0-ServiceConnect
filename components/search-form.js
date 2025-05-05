@@ -52,6 +52,18 @@ export default function SearchForm({ darkMode = false }) {
     router.push(`/providers?${queryParams.toString()}`)
   }
 
+  const inputClasses = `w-full px-4 py-3 border ${
+    darkMode ? "border-blue-600 bg-white/90" : "border-gray-300 bg-white"
+  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500`
+
+  const selectClasses = `w-full px-4 py-3 border ${
+    darkMode ? "border-blue-600 bg-white/90" : "border-gray-300 bg-white"
+  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-900`
+
+  const buttonClasses = `${
+    darkMode ? "bg-white text-blue-700 hover:bg-blue-50" : "bg-blue-700 text-white hover:bg-blue-800"
+  } px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center`
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-3">
       <div className="flex-1">
@@ -63,10 +75,9 @@ export default function SearchForm({ darkMode = false }) {
           id="location"
           name="location"
           placeholder="Enter your location"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
+          className={inputClasses}
           value={searchData.location}
           onChange={handleChange}
-          style={{ color: "#333" }} // Forcing dark text color with inline style
         />
       </div>
       <div className="flex-1">
@@ -76,11 +87,10 @@ export default function SearchForm({ darkMode = false }) {
         <select
           id="category"
           name="category"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-900"
+          className={selectClasses}
           value={searchData.category}
           onChange={handleChange}
           disabled={loading}
-          style={{ color: "#333" }} // Forcing dark text color with inline style
         >
           <option value="">All service categories</option>
           {categories.map((category) => (
@@ -99,16 +109,12 @@ export default function SearchForm({ darkMode = false }) {
           id="service"
           name="service"
           placeholder="Service needed (e.g., pipe repair)"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
+          className={inputClasses}
           value={searchData.service}
           onChange={handleChange}
-          style={{ color: "#333" }} // Forcing dark text color with inline style
         />
       </div>
-      <button
-        type="submit"
-        className="bg-blue-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-800 transition-colors flex items-center justify-center"
-      >
+      <button type="submit" className={buttonClasses}>
         <Search className="h-5 w-5 mr-2" />
         Search
       </button>
