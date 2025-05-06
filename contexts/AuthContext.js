@@ -27,8 +27,20 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     setError(null)
     try {
+      console.log("Attempting login for:", email)
       const response = await loginUser({ email, password })
+
+      if (!response || !response.data) {
+        console.error("Invalid response format:", response)
+        throw new Error("Invalid response from server")
+      }
+
       const userData = response.data
+
+      if (!userData.user || !userData.token) {
+        console.error("Missing user data or token:", userData)
+        throw new Error("Invalid user data received")
+      }
 
       // Save user to state and localStorage
       setUser(userData.user)
@@ -37,6 +49,7 @@ export function AuthProvider({ children }) {
 
       return userData.user
     } catch (err) {
+      console.error("Login error in context:", err)
       setError(err.message || "Login failed")
       throw err
     }

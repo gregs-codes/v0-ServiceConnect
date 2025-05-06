@@ -37,9 +37,11 @@ export default function Login() {
     setError("")
 
     try {
+      console.log("Submitting login form...")
       await login(formData.email, formData.password)
       router.push("/dashboard")
     } catch (error) {
+      console.error("Login form submission error:", error)
       setError(error.message || "Invalid email or password")
     } finally {
       setIsSubmitting(false)

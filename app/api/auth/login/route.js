@@ -9,14 +9,21 @@ export async function POST(request) {
       return errorResponse("Email and password are required", 400)
     }
 
+    console.log("Login attempt for email:", email)
+
     const { data, error } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password,
     })
 
     if (error) {
-      console.error("Login error:", error)
-      return errorResponse(error.message, 401)
+      console.error("Supabase login error:", error)
+      return errorResponse(error.message || "Authentication failed", 401)
+    }
+
+    if (!data || !data.user || !data.session) {
+      console.error("Supabase returned unexpected data structure:", data)
+      return errorResponse("Invalid response from authentication service", 500)
     }
 
     // Get user profile
@@ -28,6 +35,7 @@ export async function POST(request) {
 
     if (profileError) {
       console.error("Error fetching profile:", profileError)
+      // Continue anyway, just log the error
     }
 
     // Return user data and session
@@ -41,6 +49,6 @@ export async function POST(request) {
     })
   } catch (error) {
     console.error("Server error during login:", error)
-    return errorResponse("Server error during login", 500)
+    return errorResponse("Server error during login: " + (error.message || "Unknown error"), 500)
   }
 }
