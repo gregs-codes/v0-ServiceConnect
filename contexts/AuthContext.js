@@ -58,9 +58,20 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     setError(null)
     try {
+      console.log("Registering user:", userData.email)
       const response = await registerUser(userData)
+
+      if (!response) {
+        throw new Error("No response received from server")
+      }
+
+      if (!response.success) {
+        throw new Error(response.message || "Registration failed")
+      }
+
       return response.data
     } catch (err) {
+      console.error("Registration error in context:", err)
       setError(err.message || "Registration failed")
       throw err
     }
