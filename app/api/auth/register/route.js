@@ -24,15 +24,22 @@ export async function POST(request) {
     const userId = authData.user.id
     const fullName = `${firstName} ${lastName || ""}`.trim()
 
+    // Create profile in profiles table with the correct schema
+    const profileData = {
+      id: userId,
+      user_id: userId,
+      name: fullName, // Now using the name column
+      bio: `${accountType === "provider" ? "Service provider" : "Client"} on ServiceConnect.`,
+      is_service_provider: accountType === "provider",
+      availability_status: "available",
+      average_rating: 0,
+      total_reviews: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
     // Create profile in profiles table
-    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
-      {
-        id: userId,
-        full_name: fullName,
-        user_type: accountType,
-        service_type: serviceType || null,
-      },
-    ])
+    const { error: profileError } = await supabaseAdmin.from("profiles").insert([profileData])
 
     if (profileError) {
       console.error("Profile creation error:", profileError)
@@ -51,12 +58,7 @@ export async function POST(request) {
         user: {
           id: userId,
           email,
-          profile: {
-            id: userId,
-            full_name: fullName,
-            user_type: accountType,
-            service_type: serviceType || null,
-          },
+          profile: profileData,
         },
         message: "Registration successful",
       },
