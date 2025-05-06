@@ -1,54 +1,58 @@
 import { NextResponse } from "next/server"
-import { jwtVerify } from "jose"
 
-// Paths that don't require authentication
-const publicPaths = ["/api/auth/login", "/api/auth/register", "/api/services", "/api/providers"]
+// Define protected routes that require authentication
+const protectedRoutes = [
+  "/dashboard",
+  "/profile",
+  "/projects/create",
+  "/messages",
+  "/api/projects",
+  "/api/messages",
+  "/api/notifications",
+  "/api/users",
+  "/api/certifications",
+  // Note: /api/categories is NOT in this list to allow public access
+]
 
-export async function middleware(request) {
-  // Check if the path requires authentication
-  const path = request.nextUrl.pathname
+// Define routes that should be accessible only to non-authenticated users
+const authRoutes = ["/login", "/signup"]
 
-  // Allow all methods for auth endpoints
-  if (path.startsWith("/api/auth/")) {
-    return NextResponse.next()
+export function middleware(request) {
+  const { pathname } = request.nextUrl
+
+  // Check if the current path is a protected route
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+
+  // Check if the current path is an auth route
+  const isAuthRoute = authRoutes.some((route) => pathname === route)
+
+  // Get the authentication token from the request cookies
+  const token = request.cookies.get("token")?.value
+
+  // If the route is protected and there's no token, redirect to login
+  if (isProtectedRoute && !token) {
+    const url = new URL("/login", request.url)
+    url.searchParams.set("callbackUrl", encodeURI(request.url))
+    return NextResponse.redirect(url)
   }
 
-  // Allow GET requests for public paths
-  if (publicPaths.some((publicPath) => path.startsWith(publicPath)) && request.method === "GET") {
-    return NextResponse.next()
+  // If the route is for non-authenticated users and there's a token, redirect to dashboard
+  if (isAuthRoute && token) {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
-  // Get the token from the Authorization header
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json({ success: false, message: "Authentication required", statusCode: 401 }, { status: 401 })
-  }
-
-  const token = authHeader.split(" ")[1]
-
-  try {
-    // Verify the token using jose instead of jsonwebtoken
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "your-secret-key")
-    const { payload } = await jwtVerify(token, secret)
-
-    // Add user info to the request headers
-    const requestHeaders = new Headers(request.headers)
-    requestHeaders.set("x-user-id", payload.userId)
-    requestHeaders.set("x-user-email", payload.email)
-    requestHeaders.set("x-user-is-provider", String(payload.isProvider))
-
-    // Continue with the modified request
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    })
-  } catch (error) {
-    return NextResponse.json({ success: false, message: "Invalid or expired token", statusCode: 401 }, { status: 401 })
-  }
+  return NextResponse.next()
 }
 
-// Configure which paths the middleware applies to
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|public).*)",
+  ],
 }

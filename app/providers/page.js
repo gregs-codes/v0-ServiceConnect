@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { getProviders, getServiceCategories } from "@/lib/api"
 import ProviderCard from "@/components/provider-card"
+import PageHeader from "@/components/page-header"
 import { Filter, ChevronDown, ChevronUp, Search } from "lucide-react"
 
 export default function ProvidersPage() {
@@ -88,54 +89,49 @@ export default function ProvidersPage() {
 
   return (
     <main className="min-h-screen">
-      {/* Blue Hero Section */}
-      <div className="bg-blue-600 text-white py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">Find Service Providers</h1>
-          <p className="text-xl mb-8 max-w-3xl">
-            Connect with qualified professionals for your home, business, or personal projects
-          </p>
-
-          {/* Quick Search Bar */}
-          <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm max-w-3xl">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Enter your location"
-                  className="w-full px-4 py-3 border border-blue-400 bg-white/90 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  value={filters.location}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, location: e.target.value }))}
-                />
-              </div>
-              <div className="flex-1">
-                <select
-                  className="w-full px-4 py-3 border border-blue-400 bg-white/90 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-900"
-                  value={filters.serviceType}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, serviceType: e.target.value }))}
-                >
-                  <option value="">All service categories</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                onClick={() => {
-                  // This will trigger the useEffect since we're changing the filters
-                  setFilters((prev) => ({ ...prev }))
-                }}
-                className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
-              >
-                <Search className="h-5 w-5 mr-2" />
-                Search
-              </button>
+      <PageHeader
+        title="Find Service Providers"
+        subtitle="Connect with qualified professionals for your home, business, or personal projects"
+      >
+        {/* Quick Search Bar */}
+        <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm max-w-3xl mx-auto mt-6">
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Enter your location"
+                className="w-full px-4 py-3 border border-blue-400 bg-white/90 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                value={filters.location}
+                onChange={(e) => setFilters((prev) => ({ ...prev, location: e.target.value }))}
+              />
             </div>
+            <div className="flex-1">
+              <select
+                className="w-full px-4 py-3 border border-blue-400 bg-white/90 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-900"
+                value={filters.serviceType}
+                onChange={(e) => setFilters((prev) => ({ ...prev, serviceType: e.target.value }))}
+              >
+                <option value="">All service categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                // This will trigger the useEffect since we're changing the filters
+                setFilters((prev) => ({ ...prev }))
+              }}
+              className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+            >
+              <Search className="h-5 w-5 mr-2" />
+              Search
+            </button>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">

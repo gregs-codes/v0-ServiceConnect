@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { getProjects, getServiceCategories } from "@/lib/api"
 import ProjectCard from "@/components/project-card"
-import { Filter, ChevronDown, ChevronUp } from "lucide-react"
+import PageHeader from "@/components/page-header"
+import { Filter, ChevronDown, ChevronUp, Plus } from "lucide-react"
 import Link from "next/link"
 
 export default function ProjectsPage() {
@@ -73,18 +74,20 @@ export default function ProjectsPage() {
   }
 
   return (
-    <main className="min-h-screen py-12">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold">Available Projects</h1>
+    <main className="min-h-screen">
+      <PageHeader title="Available Projects" subtitle="Find and bid on projects that match your skills and expertise">
+        <div className="mt-6">
           <Link
             href="/projects/create"
-            className="bg-blue-700 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-800 transition-colors"
+            className="inline-flex items-center bg-white text-blue-700 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors"
           >
+            <Plus className="h-5 w-5 mr-2" />
             Post a Project
           </Link>
         </div>
+      </PageHeader>
 
+      <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters - Mobile Toggle */}
           <div className="lg:hidden mb-4">
@@ -169,7 +172,9 @@ export default function ProjectsPage() {
               ) : error ? (
                 <p className="text-red-600">{error}</p>
               ) : (
-                <p className="text-gray-600">{projects.length} projects found</p>
+                <p className="text-gray-600">
+                  <strong>{projects.length}</strong> projects found
+                </p>
               )}
             </div>
 

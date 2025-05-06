@@ -1,4 +1,5 @@
 import { Users, Award, Clock, Briefcase } from "lucide-react"
+import PageHeader from "@/components/page-header"
 
 export default function About() {
   // Sample team members data
@@ -26,14 +27,10 @@ export default function About() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-blue-700 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">About ServiceConnect</h1>
-          <p className="text-xl max-w-3xl mx-auto">
-            We connect businesses and individuals with skilled service professionals for projects of all sizes.
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        title="About ServiceConnect"
+        subtitle="We connect businesses and individuals with skilled service professionals for projects of all sizes."
+      />
 
       {/* Our Story */}
       <section className="py-16">
@@ -66,6 +63,7 @@ export default function About() {
         </div>
       </section>
 
+      {/* Rest of the content remains the same */}
       {/* Stats */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
