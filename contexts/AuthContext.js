@@ -9,75 +9,43 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [authChecked, setAuthChecked] = useState(false)
 
-  // Load user from localStorage on initial render and window focus
   useEffect(() => {
-    const loadUser = () => {
+    // Check for saved user in localStorage on initial load
+    const savedUser = localStorage.getItem("user")
+    if (savedUser) {
       try {
-        const savedUser = localStorage.getItem("user")
-        const token = localStorage.getItem("token")
-
-        if (savedUser && token) {
-          setUser(JSON.parse(savedUser))
-        } else {
-          setUser(null)
-        }
+        setUser(JSON.parse(savedUser))
       } catch (e) {
         console.error("Failed to parse saved user:", e)
         localStorage.removeItem("user")
-        localStorage.removeItem("token")
-        setUser(null)
-      } finally {
-        setLoading(false)
-        setAuthChecked(true)
       }
     }
-
-    // Load on initial mount
-    loadUser()
-
-    // Also load when window gets focus, in case localStorage changed in another tab
-    window.addEventListener("focus", loadUser)
-
-    return () => {
-      window.removeEventListener("focus", loadUser)
-    }
+    setLoading(false)
   }, [])
-
-  // Periodically check token expiration
-  useEffect(() => {
-    if (!user) return
-
-    const checkTokenInterval = setInterval(() => {
-      const token = localStorage.getItem("token")
-      if (!token) {
-        logout()
-        return
-      }
-
-      // Check if token is expired (if it's a JWT)
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]))
-        const expiry = payload.exp * 1000 // Convert to milliseconds
-
-        if (Date.now() > expiry) {
-          console.log("Token expired, logging out")
-          logout()
-        }
-      } catch (e) {
-        // If token isn't a valid JWT or doesn't have exp, just continue
-        console.error("Error checking token expiration:", e)
-      }
-    }, 60000) // Check every minute
-
-    return () => clearInterval(checkTokenInterval)
-  }, [user])
 
   const login = async (email, password) => {
     setError(null)
     try {
+      console.log("Attempting login for:", email)
+
+      // First, test if the API is working
+      try {
+        const testResponse = await fetch("/api/test")
+        if (!testResponse.ok) {
+          console.error("API test failed:", await testResponse.text())
+        } else {
+          console.log("API test successful")
+        }
+      } catch (testError) {
+        console.error("API test error:", testError)
+      }
+
       const response = await loginUser({ email, password })
+
+      if (!response) {
+        throw new Error("No response received from server")
+      }
 
       // Check if there's an error with email verification
       if (
@@ -152,7 +120,6 @@ export function AuthProvider({ children }) {
     register,
     logout,
     isAuthenticated: !!user,
-    authChecked,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
