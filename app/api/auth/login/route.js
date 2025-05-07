@@ -9,8 +9,6 @@ export async function POST(request) {
       return errorResponse("Email and password are required", 400)
     }
 
-    console.log("Login attempt for email:", email)
-
     const { data, error } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password,
@@ -18,11 +16,46 @@ export async function POST(request) {
 
     if (error) {
       console.error("Supabase login error:", error)
+
+      // Handle specific error codes
+      if (error.code === "invalid_credentials") {
+        return errorResponse("The email or password you entered is incorrect", 401)
+      }
+
+      // Check if the error is due to email not being confirmed
+      if (error.message.includes("Email not confirmed")) {
+        // Get user by email to check if they exist
+        const { data: userData } = await supabaseAdmin.auth.admin.listUsers({
+          filter: {
+            email: email,
+          },
+        })
+
+        const user = userData?.users?.[0]
+
+        if (user) {
+          // Return a specific error for unverified email with the user ID
+          return errorResponse(
+            {
+              message: "Your email has not been verified. Please check your inbox or request a new verification email.",
+              code: "EMAIL_NOT_VERIFIED",
+              userId: user.id,
+            },
+            401,
+          )
+        }
+      }
+
+      // Handle other common errors
+      if (error.message.includes("rate limit")) {
+        return errorResponse("Too many login attempts. Please try again later.", 429)
+      }
+
+      // Default error message
       return errorResponse(error.message || "Authentication failed", 401)
     }
 
     if (!data || !data.user || !data.session) {
-      console.error("Supabase returned unexpected data structure:", data)
       return errorResponse("Invalid response from authentication service", 500)
     }
 
@@ -35,7 +68,6 @@ export async function POST(request) {
 
     if (profileError) {
       console.error("Error fetching profile:", profileError)
-      // Continue anyway, just log the error
     }
 
     // Return user data and session
@@ -49,6 +81,6 @@ export async function POST(request) {
     })
   } catch (error) {
     console.error("Server error during login:", error)
-    return errorResponse("Server error during login: " + (error.message || "Unknown error"), 500)
+    return errorResponse("Server error during login", 500)
   }
 }

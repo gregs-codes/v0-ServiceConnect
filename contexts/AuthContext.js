@@ -27,19 +27,32 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     setError(null)
     try {
-      console.log("Attempting login for:", email)
       const response = await loginUser({ email, password })
 
-      if (!response || !response.data) {
-        console.error("Invalid response format:", response)
-        throw new Error("Invalid response from server")
+      // Check if there's an error with email verification
+      if (
+        !response.success &&
+        response.message &&
+        typeof response.message === "object" &&
+        response.message.code === "EMAIL_NOT_VERIFIED"
+      ) {
+        setError(response.message)
+        throw response
+      }
+
+      if (!response.success) {
+        const errorMessage =
+          typeof response.message === "string" ? response.message : "Login failed. Please check your credentials."
+        setError(errorMessage)
+        throw new Error(errorMessage)
       }
 
       const userData = response.data
 
-      if (!userData.user || !userData.token) {
-        console.error("Missing user data or token:", userData)
-        throw new Error("Invalid user data received")
+      if (!userData || !userData.user || !userData.token) {
+        const errorMsg = "Invalid response from server"
+        setError(errorMsg)
+        throw new Error(errorMsg)
       }
 
       // Save user to state and localStorage
@@ -58,15 +71,13 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     setError(null)
     try {
-      console.log("Registering user:", userData.email)
       const response = await registerUser(userData)
 
-      if (!response) {
-        throw new Error("No response received from server")
-      }
-
       if (!response.success) {
-        throw new Error(response.message || "Registration failed")
+        const errorMessage =
+          typeof response.message === "string" ? response.message : "Registration failed. Please try again."
+        setError(errorMessage)
+        throw new Error(errorMessage)
       }
 
       return response.data

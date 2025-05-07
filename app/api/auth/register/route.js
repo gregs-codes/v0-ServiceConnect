@@ -23,27 +23,51 @@ export async function POST(request) {
 
     const userId = authData.user.id
     const fullName = `${firstName} ${lastName || ""}`.trim()
+    const now = new Date().toISOString()
 
-    // Create profile in profiles table with the correct schema
+    // Step 1: Create a record in the public.users table
+    const { error: userError } = await supabaseAdmin.from("users").insert([
+      {
+        id: userId,
+        email: email,
+        first_name: firstName,
+        last_name: lastName || "",
+        created_at: now,
+        updated_at: now,
+        is_email_verified: false,
+      },
+    ])
+
+    if (userError) {
+      console.error("User creation error:", userError)
+      // Try to delete the auth user if user creation fails
+      await supabaseAdmin.auth.admin.deleteUser(userId)
+      return NextResponse.json(
+        { success: false, message: "Failed to create user record: " + userError.message },
+        { status: 500 },
+      )
+    }
+
+    // Step 2: Create profile in profiles table
     const profileData = {
       id: userId,
-      user_id: userId,
-      name: fullName, // Now using the name column
-      bio: `${accountType === "provider" ? "Service provider" : "Client"} on ServiceConnect.`,
+      user_id: userId, // Both id and user_id should reference the same user
+      name: fullName,
+      bio: `${fullName} is a new user.`,
       is_service_provider: accountType === "provider",
       availability_status: "available",
       average_rating: 0,
       total_reviews: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     }
 
-    // Create profile in profiles table
     const { error: profileError } = await supabaseAdmin.from("profiles").insert([profileData])
 
     if (profileError) {
       console.error("Profile creation error:", profileError)
-      // Try to delete the auth user if profile creation fails
+      // Try to delete the user records if profile creation fails
+      await supabaseAdmin.from("users").delete().eq("id", userId)
       await supabaseAdmin.auth.admin.deleteUser(userId)
       return NextResponse.json(
         { success: false, message: "Failed to create user profile: " + profileError.message },
@@ -58,6 +82,8 @@ export async function POST(request) {
         user: {
           id: userId,
           email,
+          firstName,
+          lastName,
           profile: profileData,
         },
         message: "Registration successful",

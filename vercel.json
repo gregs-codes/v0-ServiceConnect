@@ -1,0 +1,10 @@
+{
+  "env": {
+    "NEXT_PUBLIC_SITE_URL": "https://wfx247.com"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SITE_URL": "https://wfx247.com"
+    }
+  }
+}

@@ -32,7 +32,6 @@ export default function SignUp() {
     setIsLoading(true)
 
     try {
-      console.log("Submitting registration form:", { ...formData, password: "***" })
       await register(formData)
       router.push("/dashboard")
     } catch (err) {

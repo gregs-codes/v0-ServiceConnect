@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, AlertCircle, CheckCircle, XCircle, Info } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function Login() {
@@ -18,6 +18,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false)
+  const [isResendingVerification, setIsResendingVerification] = useState(false)
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false)
+  const [attempts, setAttempts] = useState(0)
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -35,17 +39,62 @@ export default function Login() {
     e.preventDefault()
     setIsSubmitting(true)
     setError("")
+    setShowVerificationMessage(false)
+    setEmailVerificationSent(false)
 
     try {
-      console.log("Submitting login form...")
       await login(formData.email, formData.password)
       router.push("/dashboard")
     } catch (error) {
-      console.error("Login form submission error:", error)
-      setError(error.message || "Invalid email or password")
+      console.error("Login error:", error)
+      setAttempts((prev) => prev + 1)
+
+      // Check if the error is due to unverified email
+      if (error.message && typeof error.message === "object" && error.message.code === "EMAIL_NOT_VERIFIED") {
+        setShowVerificationMessage(true)
+      } else {
+        setError(error.message || "Invalid email or password")
+      }
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleResendVerification = async () => {
+    setIsResendingVerification(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: formData.email }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to resend verification email")
+      }
+
+      setEmailVerificationSent(true)
+    } catch (error) {
+      setError(error.message || "Failed to resend verification email")
+    } finally {
+      setIsResendingVerification(false)
+    }
+  }
+
+  // Helper function to render the appropriate error icon
+  const getErrorIcon = () => {
+    if (error.includes("incorrect") || error.includes("Invalid")) {
+      return <XCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-red-500" />
+    } else if (error.includes("try again later")) {
+      return <Info className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-yellow-500" />
+    }
+    return <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
   }
 
   return (
@@ -59,7 +108,49 @@ export default function Login() {
             </div>
 
             {(error || authError) && (
-              <div className="bg-red-100 text-red-700 p-3 rounded-md mb-6">{error || authError}</div>
+              <div className="bg-red-100 text-red-700 p-3 rounded-md mb-6 flex items-start">
+                {getErrorIcon()}
+                <span>{error || authError}</span>
+              </div>
+            )}
+
+            {attempts >= 3 && !error && (
+              <div className="bg-yellow-100 text-yellow-800 p-3 rounded-md mb-6 flex items-start">
+                <Info className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                <span>
+                  Having trouble logging in? Make sure you're using the correct email and password.{" "}
+                  <Link href="/forgot-password" className="underline font-medium">
+                    Reset your password
+                  </Link>
+                </span>
+              </div>
+            )}
+
+            {showVerificationMessage && (
+              <div className="bg-yellow-100 text-yellow-800 p-3 rounded-md mb-6">
+                <p className="mb-2">
+                  Your email has not been verified. Please check your inbox for a verification email.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={isResendingVerification || emailVerificationSent}
+                  className="text-blue-700 font-medium hover:text-blue-800 disabled:text-blue-400"
+                >
+                  {isResendingVerification
+                    ? "Sending..."
+                    : emailVerificationSent
+                      ? "Email sent!"
+                      : "Resend verification email"}
+                </button>
+              </div>
+            )}
+
+            {emailVerificationSent && !showVerificationMessage && (
+              <div className="bg-green-100 text-green-700 p-3 rounded-md mb-6 flex items-start">
+                <CheckCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                <span>Verification email sent! Please check your inbox and verify your email before logging in.</span>
+              </div>
             )}
 
             <form onSubmit={handleSubmit}>

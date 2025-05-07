@@ -51,9 +51,7 @@ export default function ProviderCard({ provider }) {
           )}
         </div>
 
-        <p className="text-gray-700 text-sm mb-4 line-clamp-2">
-          {provider.description || provider.bio || "No description available."}
-        </p>
+        <p className="text-gray-700 text-sm mb-4 line-clamp-2">{provider.description || "No description available."}</p>
 
         <Link
           href={`/providers/${provider.id}`}

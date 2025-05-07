@@ -78,10 +78,10 @@ export default function HomePage() {
             <ProviderCard
               name="Sarah Johnson"
               category="Electrical"
-              image="/electrician-working.png"
+              image="/placeholder.svg?key=1efsh"
               verified={true}
             />
-            <ProviderCard name="Mike Wilson" category="Carpentry" image="/carpenter-working.png" verified={false} />
+            <ProviderCard name="Mike Wilson" category="Carpentry" image="/placeholder.svg?key=6w6xj" verified={false} />
           </div>
         </div>
       </section>
