@@ -27,25 +27,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     setError(null)
     try {
-      console.log("Attempting login for:", email)
-
-      // First, test if the API is working
-      try {
-        const testResponse = await fetch("/api/test")
-        if (!testResponse.ok) {
-          console.error("API test failed:", await testResponse.text())
-        } else {
-          console.log("API test successful")
-        }
-      } catch (testError) {
-        console.error("API test error:", testError)
-      }
-
       const response = await loginUser({ email, password })
-
-      if (!response) {
-        throw new Error("No response received from server")
-      }
 
       // Check if there's an error with email verification
       if (

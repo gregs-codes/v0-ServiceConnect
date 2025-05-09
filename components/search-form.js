@@ -1,20 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
-
-// Mock categories for fallback
-const MOCK_CATEGORIES = [
-  { id: "plumbing", name: "Plumbing" },
-  { id: "electrical", name: "Electrical" },
-  { id: "carpentry", name: "Carpentry" },
-  { id: "painting", name: "Painting" },
-  { id: "landscaping", name: "Landscaping" },
-  { id: "cleaning", name: "Cleaning" },
-  { id: "roofing", name: "Roofing" },
-  { id: "hvac", name: "HVAC" },
-]
+import { getServiceCategories } from "@/lib/api"
 
 export default function SearchForm({ darkMode = false }) {
   const router = useRouter()
@@ -23,8 +12,24 @@ export default function SearchForm({ darkMode = false }) {
     service: "",
     category: "",
   })
-  const [categories, setCategories] = useState(MOCK_CATEGORIES)
-  const [loading, setLoading] = useState(false)
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch service categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getServiceCategories()
+        setCategories(response.data || [])
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, AlertCircle, CheckCircle, XCircle, Info, WifiOff } from "lucide-react"
+import { Eye, EyeOff, AlertCircle, CheckCircle, XCircle, Info } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function Login() {
@@ -18,7 +18,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
-  const [apiError, setApiError] = useState(false)
   const [emailVerificationSent, setEmailVerificationSent] = useState(false)
   const [isResendingVerification, setIsResendingVerification] = useState(false)
   const [showVerificationMessage, setShowVerificationMessage] = useState(false)
@@ -36,38 +35,12 @@ export default function Login() {
     setShowPassword(!showPassword)
   }
 
-  const testApiConnection = async () => {
-    try {
-      const response = await fetch("/api/test")
-      if (response.ok) {
-        setApiError(false)
-        return true
-      } else {
-        setApiError(true)
-        return false
-      }
-    } catch (error) {
-      console.error("API connection test failed:", error)
-      setApiError(true)
-      return false
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
     setError("")
     setShowVerificationMessage(false)
     setEmailVerificationSent(false)
-    setApiError(false)
-
-    // Test API connection first
-    const apiWorking = await testApiConnection()
-    if (!apiWorking) {
-      setError("Unable to connect to the server. Please check your internet connection and try again.")
-      setIsSubmitting(false)
-      return
-    }
 
     try {
       await login(formData.email, formData.password)
@@ -76,10 +49,8 @@ export default function Login() {
       console.error("Login error:", error)
       setAttempts((prev) => prev + 1)
 
-      if (error.message && error.message.includes("Unexpected end of input")) {
-        setError("Server communication error. Please try again later.")
-        setApiError(true)
-      } else if (error.message && typeof error.message === "object" && error.message.code === "EMAIL_NOT_VERIFIED") {
+      // Check if the error is due to unverified email
+      if (error.message && typeof error.message === "object" && error.message.code === "EMAIL_NOT_VERIFIED") {
         setShowVerificationMessage(true)
       } else {
         setError(error.message || "Invalid email or password")
@@ -118,9 +89,7 @@ export default function Login() {
 
   // Helper function to render the appropriate error icon
   const getErrorIcon = () => {
-    if (apiError) {
-      return <WifiOff className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-red-500" />
-    } else if (error.includes("incorrect") || error.includes("Invalid")) {
+    if (error.includes("incorrect") || error.includes("Invalid")) {
       return <XCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-red-500" />
     } else if (error.includes("try again later")) {
       return <Info className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-yellow-500" />
@@ -139,22 +108,13 @@ export default function Login() {
             </div>
 
             {(error || authError) && (
-              <div
-                className={`${apiError ? "bg-red-100" : "bg-red-100"} text-red-700 p-3 rounded-md mb-6 flex items-start`}
-              >
+              <div className="bg-red-100 text-red-700 p-3 rounded-md mb-6 flex items-start">
                 {getErrorIcon()}
                 <span>{error || authError}</span>
               </div>
             )}
 
-            {apiError && !error && !authError && (
-              <div className="bg-yellow-100 text-yellow-800 p-3 rounded-md mb-6 flex items-start">
-                <WifiOff className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-                <span>There seems to be a connection issue. Please check your internet connection and try again.</span>
-              </div>
-            )}
-
-            {attempts >= 3 && !error && !apiError && (
+            {attempts >= 3 && !error && (
               <div className="bg-yellow-100 text-yellow-800 p-3 rounded-md mb-6 flex items-start">
                 <Info className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
                 <span>
